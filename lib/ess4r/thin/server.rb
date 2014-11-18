@@ -25,10 +25,39 @@ class Essbase
             super("@server")
 
             log.fine "Connecting to Essbase server #{server} as #{user}"
-            instrument "connect.ess4r", :server => server, :user_id => user, :aps_url => aps_url do
+            instrument "sign_on.ess4r", :server => server, :user_id => user, :aps_url => aps_url do
                 @server = try{ Essbase.instance.sign_on(user, password, false, nil, aps_url, server) }
                 @message_handler = MessageHandler.new
                 try{ @server.set_message_handler(@message_handler) }
+            end
+        end
+
+
+        # Open the specified application/database, and return a Cube object for
+        # interacting with it.
+        #
+        # @param ess_app [String] Essbase application name.
+        # @param ess_db [String] Essbase database name.
+        # @yield If a block is supplied, the opened Cube object is yielded to
+        #   the block, and then closed when the block returns.
+        # @yieldparam cube [Cube] The Cube object representing the Essbase
+        #   database.
+        def open_cube(ess_app, ess_db)
+            require_relative 'cube'
+
+            log.fine "Opening Essbase database #{ess_app}:#{ess_db}"
+            cube = nil
+            instrument "open_cube.ess4r", :app => ess_app, :db => ess_db do
+                cube = Cube.new(try{ @server.get_application(ess_app).get_cube(ess_db) })
+            end
+            if block_given?
+                begin
+                    yield cube
+                    cube.close
+                    nil
+                end
+            else
+                cube
             end
         end
 
