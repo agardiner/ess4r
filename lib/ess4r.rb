@@ -1,2 +1,2 @@
-require 'ess4r/thin/essbase'
+require 'ess4r/essbase'
 
