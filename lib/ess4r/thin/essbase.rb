@@ -46,9 +46,9 @@ class Essbase
             # Stop APS from dumping product info and internal logs to STDOUT
             java.lang.System.setProperty("suppressAPSProductInfo", "true")
 
-            # Disable framework logging for all but errors
+            # Disable framework logging, since we setup our own log handler
             ol = Java::OracleCoreOjdlLogging::ODLLogger.getODLLogger("oracle.EPMOHPS")
-            ol.set_level(Java::JavaUtilLogging::Level::SEVERE)
+            ol.set_level(Java::JavaUtilLogging::Level::OFF)
         end
         Server.new(user, password, server, aps_url)
     end
