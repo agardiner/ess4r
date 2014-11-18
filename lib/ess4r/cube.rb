@@ -1,9 +1,16 @@
+require_relative 'cube/loads'
+
+
 class Essbase
 
     # Represents a connection to an Essbase database.
     class Cube < Base
 
         include_package 'com.essbase.api.datasource'
+
+
+        # Extend functionality from modules
+        include Loads
 
 
         # Creates a new Cube object to wrap the supplied +cube+ JAPI object.
