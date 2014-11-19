@@ -76,7 +76,7 @@ class Essbase
         #   actual calc script code, not a calc script name; see #run_calc for
         #   running an existing calc script that exists as a file).
         def calculate(calc_str)
-            instrument "calculate.ess4r", :calc => calc_str do
+            instrument "calculate", :calc => calc_str do
                 try{ @cube.calculate(calc_str, false) }
             end
         end
@@ -87,7 +87,7 @@ class Essbase
         # @param calc_script [String] The name of a calculation script to be
         #   executed against this cube.
         def run_calc(calc_script)
-            instrument "calculate.ess4r", :calc_script => calc_script do
+            instrument "calculate", :calc_script => calc_script do
                 try{ @cube.calculate(false, calc_script) }
             end
         end

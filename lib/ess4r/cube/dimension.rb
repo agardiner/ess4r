@@ -208,7 +208,7 @@ class Essbase
                                    MemberGeneration, MemberLevel, Consolidation,
                                    ShareOption, MemberFormula, UDAList)
                 EOQ
-                @cube.instrument 'retrieve_members.ess4r', dimension: self do
+                @cube.instrument 'retrieve_members', dimension: self do
                     try{ mbr_sel.execute_query(query, spec) }
                 end
                 mbr_sel.get_members.get_all.each do |ess_mbr|

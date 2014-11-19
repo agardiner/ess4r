@@ -69,7 +69,7 @@ class Essbase
         # Instrument an Essbase operation
         def instrument(operation, payload = {}, &blk)
             if @instrument
-                @instrument.instrument(operation, payload, &blk)
+                @instrument.instrument("#{operation}.ess4r", payload, &blk)
             else
                 blk.call
             end

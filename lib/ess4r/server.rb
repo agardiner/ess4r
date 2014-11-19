@@ -25,7 +25,7 @@ class Essbase
             super("@server")
 
             log.fine "Connecting to Essbase server #{server} as #{user}"
-            instrument "sign_on.ess4r", :server => server, :user_id => user, :aps_url => aps_url do
+            instrument "sign_on", :server => server, :user_id => user, :aps_url => aps_url do
                 @server = try{ Essbase.instance.sign_on(user, password, false, nil, aps_url, server) }
                 @message_handler = MessageHandler.new
                 try{ @server.set_message_handler(@message_handler) }
@@ -47,7 +47,7 @@ class Essbase
 
             log.fine "Opening Essbase database #{ess_app}:#{ess_db}"
             cube = nil
-            instrument "open_cube.ess4r", :app => ess_app, :db => ess_db do
+            instrument "open_cube", :app => ess_app, :db => ess_db do
                 cube = Cube.new(try{ @server.get_application(ess_app).get_cube(ess_db) })
             end
             if block_given?

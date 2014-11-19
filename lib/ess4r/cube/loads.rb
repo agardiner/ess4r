@@ -51,7 +51,7 @@ class Essbase
         # @macro load_notes
         def load_data(data_file, rules_file = nil, error_file = nil, abort_on_error = false, &block)
             reject_count = 0
-            instrument "load_data.ess4r", :data_file => data_file,
+            instrument "load_data", :data_file => data_file,
                 :rules_file => rules_file, :error_file => error_file,
                 :abort_on_error => abort_on_error do |payload|
                 rejects = try { @cube.load_data(IEssOlapFileObject.TYPE_RULES, rules_file,
@@ -73,7 +73,7 @@ class Essbase
         # @macro load_notes
         def load_sql(sql_user, sql_pwd, rules_file, error_file = nil, abort_on_error = false, &block)
             reject_count = 0
-            instrument "load_data.ess4r", :sql_user => sql_user,
+            instrument "load_data", :sql_user => sql_user,
                 :rules_file => rules_file, :error_file => error_file,
                 :abort_on_error => abort_on_error do |payload|
                 rejects = try { @cube.load_data(IEssOlapFileObject.TYPE_RULES, rules_file,
@@ -94,7 +94,7 @@ class Essbase
         # @macro load_notes
         def load_enumerable(data, rules_file = nil, error_file = nil, abort_on_error = false, &block)
             reject_count = 0
-            instrument "data_load.ess4r",
+            instrument "data_load",
                 :rules_file => rules_file, :error_file => error_file,
                 :abort_on_error => abort_on_error do |payload|
                 try{ @cube.begin_dataload(true, false, abort_on_error, rules_file,
@@ -173,7 +173,7 @@ class Essbase
         # @return [Integer] a count of the number of rejected records.
         def build_dimension(rules_file, build_file, error_file = nil)
             error_count = 0
-            instrument "dimension_build.ess4r", :rules_file => rules_file,
+            instrument "dimension_build", :rules_file => rules_file,
                 :build_file => build_file, :error_file => error_file do |payload|
                 errors = try{ @cube.build_dimension(rules_file, IEssOlapFileObject.TYPE_RULES,
                                                      build_file, IEssOlapFileObject.TYPE_TEXT,
@@ -202,7 +202,7 @@ class Essbase
             try { @cube.begin_incremental_build_dim }
             arr_pairs.each do |file, rule|
                 log.fine "Loading dimension file #{file} using #{rule}"
-                instrument "incremental_build_dim.ess4r", :rules_file => rule,
+                instrument "incremental_build_dim", :rules_file => rule,
                     :build_file => file, :error_file => err_file do |payload|
                     errors = try{ @cube.incremental_build_dim(rule, IEssOlapFileObject.TYPE_RULES,
                                                                file, IEssOlapFileObject.TYPE_TEXT,
@@ -213,7 +213,7 @@ class Essbase
                 end
             end
             log.fine "Saving outline..."
-            instrument "restructure.ess4r" do |payload|
+            instrument "restructure" do |payload|
                 errors = try{ @cube.end_incremental_build_dim(restruct_opt, tmp_otl, err_file, false) }
                 error_count += payload[:errors] = process_build_errors(errors, tmp_otl, &block)
             end
