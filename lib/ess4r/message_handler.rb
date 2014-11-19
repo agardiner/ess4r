@@ -34,7 +34,7 @@ class Essbase
             1019018, 1019025, 1019061,
             1021000, 1021002, 1021004,
             1051083, 1053012, 1053013, 1053014,
-            1243002, 1243003
+            1241024, 1241045, 1241028, 1243002, 1243003
         ]
 
 
@@ -73,7 +73,7 @@ class Essbase
                     when MSG_LVL_INFO
                         log.fine(msg)
                     when MSG_LVL_WARN
-                        log.warn(msg)
+                        log.warning(msg)
                     when MSG_LVL_ERROR
                         log.severe(msg)
                     when MSG_LVL_FATAL

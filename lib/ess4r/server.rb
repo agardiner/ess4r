@@ -61,6 +61,31 @@ class Essbase
             end
         end
 
+
+        # Open a MaxL session against this Essbase server.
+        #
+        # @param session_name [String] Name to give the MaxL session.
+        # @yield If supplied, the block will be passed a Maxl object with which
+        #   to execute commands. The Maxl session will then be closed when the
+        #   block returns.
+        # @yieldparam maxl [Maxl] A Maxl object from which Maxl commands can be
+        #   issued.
+        def open_maxl_session(session_name = 'Maxl')
+            require_relative 'maxl'
+
+            maxl = Maxl.new(try{ @server.open_maxl_session(session_name) }, @message_handler)
+            if block_given?
+                begin
+                    yield maxl
+                ensure
+                    maxl.close
+                    nil
+                end
+            else
+                maxl
+            end
+        end
+
     end
 
 end
