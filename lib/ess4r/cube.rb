@@ -1,5 +1,6 @@
 require_relative 'cube/dimensions'
 require_relative 'cube/loads'
+require_relative 'file_transfer'
 
 
 class Essbase
@@ -13,6 +14,7 @@ class Essbase
         # Extend functionality from modules
         include Dimensions
         include Loads
+        include FileTransfer
 
 
         # Creates a new Cube object to wrap the supplied +cube+ JAPI object.
