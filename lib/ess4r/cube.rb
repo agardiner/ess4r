@@ -1,3 +1,4 @@
+require_relative 'cube/dimensions'
 require_relative 'cube/loads'
 
 
@@ -10,6 +11,7 @@ class Essbase
 
 
         # Extend functionality from modules
+        include Dimensions
         include Loads
 
 
