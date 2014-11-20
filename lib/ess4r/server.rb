@@ -42,12 +42,14 @@ class Essbase
         #   the block, and then closed when the block returns.
         # @yieldparam cube [Cube] The Cube object representing the Essbase
         #   database.
+        # @return [Cube] A Cube object for interacting with the specified
+        #   database.
         def open_cube(ess_app, ess_db)
             require_relative 'cube'
 
             log.fine "Opening Essbase database #{ess_app}:#{ess_db}"
             cube = nil
-            instrument "open_cube", :app => ess_app, :db => ess_db do
+            instrument "open_cube", app: ess_app, db: ess_db do
                 cube = Cube.new(try{ @server.get_application(ess_app).get_cube(ess_db) })
             end
             if block_given?
@@ -70,6 +72,7 @@ class Essbase
         #   block returns.
         # @yieldparam maxl [Maxl] A Maxl object from which Maxl commands can be
         #   issued.
+        # @return [Maxl] A Maxl object from which Maxl commands can be issued.
         def open_maxl_session(session_name = 'Maxl')
             require_relative 'maxl'
 

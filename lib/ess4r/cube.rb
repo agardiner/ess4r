@@ -78,7 +78,7 @@ class Essbase
         #   actual calc script code, not a calc script name; see #run_calc for
         #   running an existing calc script that exists as a file).
         def calculate(calc_str)
-            instrument "calculate", :calc => calc_str do
+            instrument "calculate", calc: calc_str do
                 try{ @cube.calculate(calc_str, false) }
             end
         end
@@ -89,12 +89,39 @@ class Essbase
         # @param calc_script [String] The name of a calculation script to be
         #   executed against this cube.
         def run_calc(calc_script)
-            instrument "calculate", :calc_script => calc_script do
+            instrument "calculate", calc_script: calc_script do
                 try{ @cube.calculate(false, calc_script) }
             end
         end
 
         # @!endgroup
+
+
+        # Open a CubeView object for retrieving data from the Essbase database.
+        #
+        # @yield If a block is supplied, the opened CubeView object is yielded to
+        #   the block, and then closed when the block returns.
+        # @yieldparam cube [Cube] The CubeView object representing the Essbase
+        #   database.
+        # @return [CubeView] A CubeView for executing retrieves etc against this
+        #   cube.
+        def open_cube_view(label = 'CubeView')
+            require_relative 'cube/cube_view'
+
+            cube_view = nil
+            instrument "open_cube_view" do
+                cube_view = CubeView.new(try{ @cube.open_cube_view(label) })
+            end
+            if block_given?
+                begin
+                    yield cube_view
+                    cube_view.close
+                    nil
+                end
+            else
+                cube_view
+            end
+        end
 
 
         # Returns the application and database name for the cube connection.

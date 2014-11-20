@@ -26,16 +26,18 @@ class Essbase
         end
 
 
-        # Executes the specified Maxl +stmt+. Returns a ResultSet object if the
-        # command generates one.
+        # Executes the specified Maxl +stmt+.
         #
         # Note: this seems not to work for data loads or dimension builds that
         # reference local files or rules objects.
+        #
+        # @return [MaxlResultSet, NilClass] If the command is one that returns a
+        #   grid, then a MaxlResultSet object is returned from which the contents
+        #   can be obtained. Otherwise, nil is returned.
         def execute(stmt)
             orig_stmt = stmt
             stmt = stmt.sub(/;\s*$/, '').gsub(/\n/, ' ').gsub(/\s{2,}/, ' ').strip
             log.finer "Executing MAXL statement: #{orig_stmt}"
-            count = nil
             begin
                 instrument 'maxl', statement: stmt do
                     try{ @maxl.execute(stmt) }
@@ -44,7 +46,9 @@ class Essbase
                 log.severe "Error in Maxl statement: #{stmt}"
                 raise
             end
-            process_messages
+            if process_messages
+                result_set
+            end
         end
 
 
@@ -61,7 +65,7 @@ class Essbase
         # Retrieve the messages from executing the MaxL statement, and pass them
         # on to the message handler.
         def process_messages
-            count = 0
+            count = nil
             try{ @maxl.get_messages }.each do |msg|
                 msg =~ /(\w+) - (\d+) - (.+)/
                 level, msg_num, msg_text = $1, $2.to_i, $3

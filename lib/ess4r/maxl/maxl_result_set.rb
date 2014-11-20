@@ -113,6 +113,9 @@ class Essbase
         end
 
 
+        # Returns the MaxL rsults as a string.
+        #
+        # TODO: Determine appropriate column widths and format so columns line up
         def to_s
             self.to_a.map{ |row| row.join('  ') }.join("\n")
         end
