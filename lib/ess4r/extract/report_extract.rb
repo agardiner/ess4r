@@ -15,13 +15,15 @@ class Essbase
         # @param options [Hash] An options hash for controlling various facets
         #   of the extract process.
         def extract_data(extract_spec, output_file, options = {})
-            log.info "Exporting #{cube} data via report script..."
+            log.info "Exporting #{@cube} data via report script..."
+
+            # Create the report spec
             convert_extract_spec_to_members(extract_spec, options)
             report_sparse_dynamic_calcs(:report, options)
             rep_script = generate_script(options)
             save_query_to_file(rep_script, options[:query_file], '.rep')
 
-            # Submit the query
+            # Submit the report
             iter = nil
             instrument 'report.extract', script: rep_script, output_file: output_file do
                 iter = cube.report(rep_script, false, false, true, false)
@@ -63,15 +65,8 @@ class Essbase
             decimals = options[:decimals] || options[:decimal_places]
 
             # Determine layout
-            @page_dims = []
-            if @extract_spec[:rows]
-                @page_dims = @extract_spec[:pages].keys if @extract_spec[:pages]
-                @row_dims = @extract_spec[:rows].keys
-                @col_dims = @extract_spec[:cols].keys
-            else
-                @col_dims = [options.fetch(:column_dim, @cube.dense_dimensions.last.name)]
-                @row_dims = (@cube.get_data_export_dimension_order).map(&:name) - @col_dims
-            end
+            assign_axes(options)
+            raise ArgumentError, "POV axis is not supported for report extracts" if @pov_dims.size > 0
             layout = []
             layout << %{<PAGE(#{quote_mbrs(@page_dims).join(', ')})} if @page_dims.size > 0
             layout << %{<ROW(#{quote_mbrs(@row_dims).join(', ')})}

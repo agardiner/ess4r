@@ -134,6 +134,7 @@ class Essbase
                 Essbase::ReportExtract.new(self)
             when :calc
             when :mdx
+                Essbase::MdxExtract.new(self)
             else
                 raise ArgumentError, "Unrecognised extract_method: #{options[:extract_method]}"
             end

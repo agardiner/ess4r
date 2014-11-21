@@ -34,12 +34,12 @@ class Essbase
         def mdx_query(mdx_stmt)
             require_relative 'mdx_data_set'
 
-            op = @cube_view.createIEssOpMdxQuery()
-            op.set_query_spec mdx_stmt
+            op = try{ @cube_view.createIEssOpMdxQuery() }
+            try{ op.set_query_spec(mdx_stmt) }
             instrument "mdx_query", mdx: mdx_stmt do
                 try{ @cube_view.perform_operation(op) }
             end
-            MdxDataSet.new(@cube_view.get_md_data_set)
+            MdxDataSet.new(try{ @cube_view.get_md_data_set })
         end
 
 

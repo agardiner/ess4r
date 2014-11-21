@@ -1,3 +1,6 @@
+require 'bigdecimal'
+
+
 class Essbase
 
     # Represents the results of an MDX query.

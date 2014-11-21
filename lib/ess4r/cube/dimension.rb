@@ -6,6 +6,8 @@ class Essbase
     # Holds a set of Member objects representing the members in a dimension.
     class Dimension < Base
 
+        include Enumerable
+
         # The dimension name
         attr_reader :name
         # The storage type, e.g. Dense, Sparse
@@ -22,7 +24,7 @@ class Essbase
             @storage_type = ess_dim.storage_type.to_s
             @tag = ess_dim.tag.to_s
             @cube = cube
-            @dim_mbr = nil
+            @root_member = nil
         end
 
 
@@ -47,6 +49,14 @@ class Essbase
         # Returns true if this dimension is not an attribute dimension
         def non_attribute_dimension?
             !attribute_dimension?
+        end
+
+
+        # @return [Member] The top-most member in the dimension (i.e. the member
+        #   with the same name as the dimension).
+        def root_member
+            retrieve_members unless @members
+            @root_member
         end
 
 
@@ -166,15 +176,16 @@ class Essbase
         end
 
 
-        # Performs a traversal of the dimension hierarchy, yielding the name and
-        # Member object for each member in the dimension to the supplied block.
+        # Performs a traversal of the dimension hierarchy, yielding each Member
+        # in the dimension to the supplied block.
+        #
         # Note: By default, this iteration of members excludes shared members,
-        # but if these are desired, specify false in the :exclude_shared option.
+        # but if these are desired, specify true in the :include_shared option.
         def each(opts = {})
             retrieve_members unless @members
-            exclude_shared = opts.fetch(:exclude_shared, true)
+            include_shared = opts.fetch(:include_shared, false)
             @members.each do |mbr|
-                yield mbr.name, mbr unless mbr.shared? && exclude_shared
+                yield mbr unless mbr.shared? || include_shared
             end
         end
 
@@ -186,8 +197,8 @@ class Essbase
         # @yield Yields each member of the dimension as it is visited
         # @yieldparam mbr [Member] A member of the dimension
         def walk(options = {}, &blk)
-            retrieve_members unless @dim_mbr
-            @dim_mbr.traverse(0, options, &blk)
+            retrieve_members unless @members
+            @root_member.traverse(0, options, &blk)
         end
 
 
@@ -198,7 +209,7 @@ class Essbase
         # directly unless you wish to refresh the dimension members, e.g. after
         # a dimension build.
         def retrieve_members
-            @dim_mbr = nil
+            @root_member = nil
             @members = []
             shared = []
             @member_lookup = {}
@@ -231,7 +242,7 @@ class Essbase
                     smbr.instance_variable_set(:@non_shared_member, mbr)
                     mbr.instance_variable_get(:@shared_members) << smbr
                 end
-                @dim_mbr = @member_lookup[self.name.upcase]
+                @root_member = @member_lookup[self.name.upcase]
                 # Convert parent names to references to the parent Member object
                 # This can only be done after we've seen all members, since the
                 # member selection query returns parents after children

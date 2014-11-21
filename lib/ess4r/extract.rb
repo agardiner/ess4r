@@ -105,7 +105,6 @@ class Essbase
             @sparse_dynamic_calcs = Set.new
 
             @cube.dimensions.each do |dim|
-                dyn_calc = Set.new
                 # Get the member selection for each dimension
                 if mbr_specs = get_hash_val(ext_mbrs, dim.name)
                     unless mbr_specs.is_a?(String) || mbr_specs.is_a?(Array)
@@ -122,7 +121,6 @@ class Essbase
                         else
                             mbrs = @cube[dim.name].expand_members(mbr_spec)
                             mbrs.map! do |mbr|
-                                dyn_calc << mbr if mbr.dynamic_calc?
                                 mbr.name
                             end
                             mbr_list.concat(quote_mbrs(mbrs))
@@ -134,14 +132,12 @@ class Essbase
                         # Default missing dimension to level 0 members of dimension
                         mbrs = dim[dim.name].leaves
                         mbrs.map! do |mbr|
-                            dyn_calc << mbr if mbr.dynamic_calc?
                             mbr.name
                         end
                         mbr_list = quote_mbrs(mbrs)
                     elsif default_missing_dims == :top
                         # Default missing dimension to top member
                         mbr = dim[dim.name]
-                        dyn_calc << mbr if mbr.dynamic_calc?
                         mbr_list = quote_mbrs([dim.name])
                     else
                         # No defaulting missig dims, so error
@@ -149,16 +145,20 @@ class Essbase
                     end
                 end
 
-                if exclude_dynamic_calcs && dyn_calc.size > 0
-                    mbr_list = mbr_list - quote_mbrs(dyn_calc.map(&:name))
-                    log.warning "Removed #{dyn_calc.size} dynamic calc members from #{dim.name} member set"
-                    if mbr_list.size == 0
-                        raise ArgumentError, "Removing dynamic calc members from #{dim.name} leaves an empty set"
+                if mbr_list
+                    mbr_list.uniq!
+                    dyn_calc = quote_mbrs(dim.select(&:dynamic_calc?).map(&:name)) & mbr_list
+                    if exclude_dynamic_calcs && dyn_calc.size > 0
+                        mbr_list = mbr_list - dyn_calc
+                        log.warning "Removed #{dyn_calc.size} dynamic calc members from #{dim.name} member set"
+                        if mbr_list.size == 0
+                            raise ArgumentError, "Removing dynamic calc members from #{dim.name} leaves an empty set"
+                        end
+                    elsif dim.storage_type.to_s == 'Sparse' && dyn_calc.size > 0
+                        @sparse_dynamic_calcs.merge(dyn_calc)
                     end
-                elsif dim.storage_type.to_s == 'Sparse' && dyn_calc.size > 0
-                    @sparse_dynamic_calcs.merge(dyn_calc)
+                    ext_mbrs[dim.name] = mbr_list.uniq
                 end
-                ext_mbrs[dim.name] = mbr_list.uniq if mbr_list
             end
             @extract_members = ext_mbrs
         end
@@ -244,6 +244,42 @@ class Essbase
         end
 
 
+        # Process the extract spec, and assigns dimensions to axes
+        def assign_axes(options)
+            @pov_dims = []
+            @page_dims = []
+            @row_dims = []
+            @col_dims = []
+
+            if @extract_spec[:rows]
+                assign_axis(:pov, @pov_dims)
+                assign_axis(:pages, @page_dims)
+                assign_axis(:rows, @row_dims)
+                assign_axis(:columns, @col_dims)
+            else
+                @col_dims = [options.fetch(:column_dim, @cube.dense_dimensions.last.name)]
+                @row_dims = (@cube.get_data_export_dimension_order).map(&:name) - @col_dims
+                # TODO: Consider any attribute dimensions in @extract_spec
+            end
+            raise ArgumentError, "No column dimension specified" unless @col_dims.size > 0
+        end
+
+
+        # Add the names of each dimension that is specified in @extract_spec to
+        # the supplied +dim_set+.
+        def assign_axis(axis, dim_set)
+            if axis = @extract_spec[axis]
+                axis.keys.each do |dim_key|
+                    if dim = @cube[dim_key]
+                        dim_set << dim.name
+                    else
+                        raise ArgumentError, "No dimension named #{dim_key} exists"
+                    end
+                end
+            end
+        end
+
+
         # Saves the generated extract query specification to a query file for
         # debugging.
         #
@@ -252,12 +288,18 @@ class Essbase
         # @param file_name [String] The path of the file to save the query to.
         # @param extension [String] The appropriate extension for the query,
         #   based on the type of extract performed.
-        def save_query_to_file(query, file_name, extension)
+        # @param query_num [Integer] An optional count of the number of queries
+        #   performed so far in this extract. Determines if a new query file is
+        #   created, or an existing file is appended to.
+        def save_query_to_file(query, file_name, extension, query_num = 0)
             if file_name
                 log.finest "Extract script:\n#{query}"
                 ext_re = Regexp.new("\\#{extension}$", Regexp::IGNORECASE)
                 file_name += extension unless file_name =~ ext_re
-                File.open(file_name, 'w') { |f| f.puts(query) }
+                File.open(file_name, query_num == 0 ? 'w' : 'a') do |f|
+                    f.puts "\n---\n\n" if query_num > 0
+                    f.puts(query)
+                end
             end
         end
 
@@ -267,4 +309,5 @@ end
 
 
 # Include the sub-classes that define the different query methods
+require_relative 'extract/mdx_extract'
 require_relative 'extract/report_extract'
