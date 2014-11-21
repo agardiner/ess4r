@@ -44,6 +44,12 @@ class Essbase
         end
 
 
+        # Returns true if this dimension is not an attribute dimension
+        def non_attribute_dimension?
+            !attribute_dimension?
+        end
+
+
         # Returns a Member object containing details about the dimension member
         # +mbr_name+.
         def [](mbr_name)
@@ -198,7 +204,6 @@ class Essbase
             @member_lookup = {}
             log.finer "Retrieving members of dimension '#{@name}'"
             alias_tbls = try{ @cube.get_alias_table_names.to_a }
-            puts alias_tbls
             mbr_sel = try{ @cube.open_member_selection("MemberQuery") }
             begin
                 spec = %Q{@IDESCENDANTS("#{self.name}")}

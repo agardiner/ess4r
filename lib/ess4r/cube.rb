@@ -2,6 +2,7 @@ require_relative 'cube/dimensions'
 require_relative 'cube/loads'
 require_relative 'cube/rules'
 require_relative 'file_transfer'
+require_relative 'extract'
 
 
 class Essbase
@@ -123,6 +124,20 @@ class Essbase
             else
                 cube_view
             end
+        end
+
+
+        # Extract data from the cube to an +output_file+.
+        def extract(extract_spec, output_file, options = {})
+            extractor = case options.fetch(:extract_method, :mdx)
+            when :report
+                Essbase::ReportExtract.new(self)
+            when :calc
+            when :mdx
+            else
+                raise ArgumentError, "Unrecognised extract_method: #{options[:extract_method]}"
+            end
+            extractor.extract_data(extract_spec, output_file, options)
         end
 
 

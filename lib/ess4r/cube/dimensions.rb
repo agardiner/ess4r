@@ -13,6 +13,34 @@ class Essbase
         end
 
 
+        # @return [Array<Dimension>] An array containing all the sparse
+        #   dimensions in this cube (in outline order).
+        def sparse_dimensions
+            dimensions.select{ |d| d.sparse? }
+        end
+
+
+        # @return [Array<Dimension>] An array containing all the dense
+        #   dimensions in this cube (in outline order).
+        def dense_dimensions
+            dimensions.select{ |d| d.dense? }
+        end
+
+
+        # @return [Array<Dimension>] An array containing all the non-attribute
+        #   dimensions in this cube (in outline order).
+        def non_attribute_dimensions
+            dimensions.reject{ |d| d.attribute_dimension? }
+        end
+
+
+        # @return [Array<Dimension>] An array containing all the attribute
+        #   dimensions in this cube (in outline order).
+        def attribute_dimensions
+            dimensions.select{ |d| d.attribute_dimension? }
+        end
+
+
         # Returns a Dimension object containing the members of the +dim_name+
         # dimension. The Dimension object is cached for re-use, and Member
         # objects include useful methods for navigating through a hierarchy.
@@ -25,20 +53,14 @@ class Essbase
 
         # Returns the dimension names in the order they appear in a Data Export
         # run from a calc script; i.e. sparse dimensions in outline order,
-        # followed by dense dimensions in outline order.
+        # followed by dense dimensions in outline order. This is the most
+        # efficient means of extracting data when the order of records is not
+        # important.
         #
         # @return [Array] A list of dimension names in the order they will
         #   appear in a database export.
         def get_data_export_dimension_order
-            sparse_dims, dense_dims = [], []
-            self.dimensions.each do |dim|
-                if dim.sparse?
-                    sparse_dims << dim.name
-                elsif dim.dense?
-                    dense_dims << dim.name
-                end
-            end
-            sparse_dims + dense_dims
+            sparse_dimensions + dense_dimensions
         end
 
 
