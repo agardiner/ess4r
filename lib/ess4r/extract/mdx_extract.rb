@@ -175,7 +175,8 @@ class Essbase
             assign_axes(options)
 
             # Place dimensions on each axis
-            pov_spec =  @pov_dims.length > 0 ? "WHERE (#{pov_dims.surround('%{', '}').join(', ')})" : ''
+            pov_spec = @pov_dims.length > 0 ?
+                "WHERE (#{@pov_dims.map{ |dim| @extract_members[dim].first }.join(', ')})" : ''
             page_spec = cross_join_dims(@page_dims)
             row_spec = cross_join_dims(@row_dims)
             col_spec = cross_join_dims(@col_dims)

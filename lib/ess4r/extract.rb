@@ -35,13 +35,15 @@ class Essbase
         #
         # @param hsh [Hash] The hash in which to find the value.
         # @param key [String, Symbol] A String or Symbol key to find a match for.
-        # @return [Object] The matching value in +hsh+, or nil if no value was
-        #   found.
-        def get_hash_val(hsh, key)
+        # @param default [Object] The default value to return if no match is
+        #   found for the key.
+        # @return [Object] The matching value in +hsh+, or +default+ if no value
+        #   was found.
+        def get_hash_val(hsh, key, default = nil)
             # Find the key used in the that matches the dimension name
             search_key = key.to_s.downcase
             matched_key = hsh.keys.find{ |k| k.to_s.downcase == search_key }
-            matched_key && hsh[matched_key]
+            matched_key ? hsh[matched_key] : default
         end
 
 
@@ -102,9 +104,11 @@ class Essbase
 
             @extract_spec = extract_spec
 
-            if extract_spec.include?(:rows) && extract_spec.include?(:columns)
-                ext_mbrs = extract_spec[:rows].clone.merge(extract_spec[:columns]).
-                    merge(extract_spec[:pages] || {}).merge(extract_spec[:pov] || {})
+            if get_hash_val(extract_spec, :rows) && get_hash_val(extract_spec, :columns)
+                ext_mbrs = get_hash_val(extract_spec, :rows).clone.
+                    merge(get_hash_val(extract_spec, :columns)).
+                    merge(get_hash_val(extract_spec, :pages, {})).
+                    merge(get_hash_val(extract_spec, :pov, {}))
             else
                 ext_mbrs = extract_spec.clone
             end
@@ -260,13 +264,13 @@ class Essbase
             @row_dims = []
             @col_dims = []
 
-            if @extract_spec[:rows] && @extract_spec[:columns]
+            if get_hash_val(@extract_spec, :rows) && get_hash_val(@extract_spec, :columns)
                 assign_axis(:pov, @pov_dims)
                 assign_axis(:pages, @page_dims)
                 assign_axis(:rows, @row_dims)
                 assign_axis(:columns, @col_dims)
             else
-                @col_dims = [options.fetch(:column_dim, @cube.dense_dimensions.last.name)]
+                @col_dims = [get_hash_val(options, :column_dim, @cube.dense_dimensions.last.name)]
                 @row_dims = (@cube.get_data_export_dimension_order).map(&:name) - @col_dims
                 # TODO: Consider any attribute dimensions in @extract_spec
             end
@@ -277,7 +281,7 @@ class Essbase
         # Add the names of each dimension that is specified in @extract_spec to
         # the supplied +dim_set+.
         def assign_axis(axis, dim_set)
-            if axis = @extract_spec[axis]
+            if axis = get_hash_val(@extract_spec, axis)
                 axis.keys.each do |dim_key|
                     if dim = @cube[dim_key]
                         dim_set << dim.name
