@@ -80,13 +80,14 @@ class Essbase
             # Setup formatting
             format_options = %w{
                 NOINDENTGEN
+                BLOCKHEADERS
                 ROWREPEAT
+                SUPFEED
                 SUPBRACKETS
                 SUPCOMMAS
                 SUPEMPTYROWS
                 SUPMISSINGROWS
                 SUPZEROROWS
-                SUPHEADING
             }
             format_options << "DECIMAL #{decimals}" if decimals
             format_options << %Q{MISSINGTEXT "#{missing_val}"} if missing_val

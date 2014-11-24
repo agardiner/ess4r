@@ -83,16 +83,22 @@ class Essbase
         #   - :leaves/:level0 Include all non-shared leaf members from the dimension
         #   - :none Raise an exception if a dimension is not specified.
         #   Default is :top.
-        # @option options [Boolean] :exclude_dynamic_calcs If true, dynamic calc
-        #   members will be excluded from the extract. Useful when an expansion
-        #   macro expands to these members, but you don't need them in the
-        #   extract. Default is false - dynamic members will be included.
+        # @option options [Boolean] :include_dynamic_calcs If false, dynamic
+        #   calc members will be excluded from the extract. Useful when an
+        #   expansion macro expands to these members, but you don't need them in
+        #   the extract. Default is true - dynamic members will be included.
+        # @option options [Boolean] :include_sparse_dynamic_calcs If false,
+        #   sparse dynamic calc members will be excluded from the extract. Useful
+        #   when an expansion macro expands to these members, but you don't need
+        #   them in the extract. Default is false - sparse dynamic members will
+        #   be excluded.
         # @return [Hash] An expanded extract specification, with all dimensions
         #   specified, and all expansion macros replaced with the matching
         #   members.
         def convert_extract_spec_to_members(extract_spec, options = {})
             default_missing_dims = options.fetch(:default_missing_dims, :top)
-            exclude_dynamic_calcs = options.fetch(:exclude_dynamic_calcs, false)
+            include_dynamic_calcs = options.fetch(:include_dynamic_calcs, true)
+            include_sparse_dynamic_calcs = options.fetch(:include_sparse_dynamic_calcs, false)
 
             @extract_spec = extract_spec
 
@@ -130,6 +136,7 @@ class Essbase
                     # No dimension specification
                     if default_missing_dims == :leaves || default_missing_dims == :level0
                         # Default missing dimension to level 0 members of dimension
+                        log.warning "No members specified for #{dim.name}; defaulting to #{dim.name}.Level0"
                         mbrs = dim[dim.name].leaves
                         mbrs.map! do |mbr|
                             mbr.name
@@ -137,6 +144,7 @@ class Essbase
                         mbr_list = quote_mbrs(mbrs)
                     elsif default_missing_dims == :top
                         # Default missing dimension to top member
+                        log.warning "No members specified for #{dim.name}; defaulting to #{dim.name}"
                         mbr = dim[dim.name]
                         mbr_list = quote_mbrs([dim.name])
                     else
@@ -148,7 +156,8 @@ class Essbase
                 if mbr_list
                     mbr_list.uniq!
                     dyn_calc = quote_mbrs(dim.select(&:dynamic_calc?).map(&:name)) & mbr_list
-                    if exclude_dynamic_calcs && dyn_calc.size > 0
+                    if dyn_calc.size > 0 && (!include_dynamic_calcs ||
+                                             (!include_sparse_dynamic_calcs && dim.sparse?))
                         mbr_list = mbr_list - dyn_calc
                         log.warning "Removed #{dyn_calc.size} dynamic calc members from #{dim.name} member set"
                         if mbr_list.size == 0
@@ -251,7 +260,7 @@ class Essbase
             @row_dims = []
             @col_dims = []
 
-            if @extract_spec[:rows]
+            if @extract_spec[:rows] && @extract_spec[:columns]
                 assign_axis(:pov, @pov_dims)
                 assign_axis(:pages, @page_dims)
                 assign_axis(:rows, @row_dims)
@@ -311,3 +320,4 @@ end
 # Include the sub-classes that define the different query methods
 require_relative 'extract/mdx_extract'
 require_relative 'extract/report_extract'
+require_relative 'extract/calc_extract'

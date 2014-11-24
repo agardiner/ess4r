@@ -133,6 +133,7 @@ class Essbase
             when :report
                 Essbase::ReportExtract.new(self)
             when :calc
+                Essbase::CalcExtract.new(self)
             when :mdx
                 Essbase::MdxExtract.new(self)
             else
