@@ -41,9 +41,16 @@ class Essbase
 
         # Create an Essbase JAPI object wrapper, with logging etc
         def initialize(instance_var_name = nil, wrapped_obj = nil)
-            @log = Java::JavaUtilLogging::Logger.getLogger("ess4r.#{instance_var_name ?
-                                                                    instance_var_name[1, -1] :
-                                                                    'base'}")
+            case instance_var_name
+            when /^@(.+)/
+                log_name = $1
+            when String
+                log_name = instance_var_name
+                instance_var_name = nil
+            else
+                log_name = self.class.name.split('::').last.downcase
+            end
+            @log = Java::JavaUtilLogging::Logger.getLogger("ess4r.#{log_name}")
             if instance_var_name
                 @japi_instance_var_name = instance_var_name.intern
                 instance_variable_set(@japi_instance_var_name, wrapped_obj) if wrapped_obj

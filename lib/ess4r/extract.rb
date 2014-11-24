@@ -25,7 +25,7 @@ class Essbase
         #
         # @param cube [Cube] The cube from which to run the extract.
         def initialize(cube)
-            super()
+            super('extract')
             @cube = cube
         end
 

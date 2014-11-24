@@ -50,7 +50,7 @@ class Essbase
 
         # Create a new message handler for processing log messages from Essbase
         def initialize
-            super
+            super('essbase')
             @suppress_message_nums = DEFAULT_SUPPRESS_MSGS
         end
 
