@@ -131,15 +131,15 @@ class Essbase
         def extract(extract_spec, output_file, options = {})
             extractor = case options.fetch(:extract_method, :mdx)
             when :report
-                Essbase::ReportExtract.new(self)
+                Essbase::ReportExtract.new(self, extract_spec, options)
             when :calc
-                Essbase::CalcExtract.new(self)
+                Essbase::CalcExtract.new(self, extract_spec, options)
             when :mdx
-                Essbase::MdxExtract.new(self)
+                Essbase::MdxExtract.new(self, extract_spec, options)
             else
                 raise ArgumentError, "Unrecognised extract_method: #{options[:extract_method]}"
             end
-            extractor.extract_data(extract_spec, output_file, options)
+            extractor.extract_data(output_file, options)
         end
 
 

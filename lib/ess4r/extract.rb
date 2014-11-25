@@ -13,37 +13,44 @@ class Essbase
         attr_reader :cube
         # The extract specification as supplied by the caller
         attr_reader :extract_spec
+
         # The extract specification after macro expansion
         attr_reader :extract_members
+        # The dimensions assigned to the POV (aka Slicer) axis
+        attr_reader :pov_dims
+        alias_method :slicer_dims, :pov_dims
+        # The dimensions assigned to the page axis
+        attr_reader :page_dims
+        # The dimensions assigned to the row axis
+        attr_reader :row_dims
+        # The dimensions assigned to the column axis
+        attr_reader :col_dims
+        alias_method :column_dims, :col_dims
+
         # The set of sparse dynamic calc members found in the extract spec
         attr_reader :sparse_dynamic_calcs
         # The generated extract query
         attr_reader :query
 
 
+
         # Create an extract instance.
         #
         # @param cube [Cube] The cube from which to run the extract.
-        def initialize(cube)
+        # @param extract_spec [Hash] A hash containing a list of member
+        #   specifications for each dimension. The hash may be provided in one
+        #   of two different forms:
+        #   - The keys of the hash are the dimensions, and the values are the
+        #     member specifications (which will be expanded via
+        #     Dimension#expand_members).
+        #   - The keys of the hash are axis specifiers containing :pov (optional),
+        #     :page (optional), :row (required) and :column (required) keys, and
+        #     the values are Hashes of dimension => member specifications (which
+        #     will be expanded via Dimension#expand_members).
+        def initialize(cube, extract_spec, options = {})
             super('extract')
             @cube = cube
-        end
-
-
-        # Finds a matching entry in +hsh+ that matches +key+, ignoring case
-        # and Symbol/String differeces.
-        #
-        # @param hsh [Hash] The hash in which to find the value.
-        # @param key [String, Symbol] A String or Symbol key to find a match for.
-        # @param default [Object] The default value to return if no match is
-        #   found for the key.
-        # @return [Object] The matching value in +hsh+, or +default+ if no value
-        #   was found.
-        def get_hash_val(hsh, key, default = nil)
-            # Find the key used in the that matches the dimension name
-            search_key = key.to_s.downcase
-            matched_key = hsh.keys.find{ |k| k.to_s.downcase == search_key }
-            matched_key ? hsh[matched_key] : default
+            @extract_spec = extract_spec
         end
 
 
@@ -97,20 +104,19 @@ class Essbase
         # @return [Hash] An expanded extract specification, with all dimensions
         #   specified, and all expansion macros replaced with the matching
         #   members.
-        def convert_extract_spec_to_members(extract_spec, options = {})
+        def convert_extract_spec_to_members(options = {})
             default_missing_dims = options.fetch(:default_missing_dims, :top)
             include_dynamic_calcs = options.fetch(:include_dynamic_calcs, true)
             include_sparse_dynamic_calcs = options.fetch(:include_sparse_dynamic_calcs, false)
 
-            @extract_spec = extract_spec
-
-            if get_hash_val(extract_spec, :rows) && get_hash_val(extract_spec, :columns)
-                ext_mbrs = get_hash_val(extract_spec, :rows).clone.
-                    merge(get_hash_val(extract_spec, :columns)).
-                    merge(get_hash_val(extract_spec, :pages, {})).
-                    merge(get_hash_val(extract_spec, :pov, {}))
+            log.fine "Validating extract specification against #{@cube}"
+            if get_hash_val(@extract_spec, :rows) && get_hash_val(@extract_spec, :columns)
+                ext_mbrs = get_hash_val(@extract_spec, :rows).clone.
+                    merge(get_hash_val(@extract_spec, :columns)).
+                    merge(get_hash_val(@extract_spec, :pages, {})).
+                    merge(get_hash_val(@extract_spec, :pov, {}))
             else
-                ext_mbrs = extract_spec.clone
+                ext_mbrs = @extract_spec.clone
             end
             @sparse_dynamic_calcs = Set.new
 
@@ -177,10 +183,16 @@ class Essbase
         end
 
 
+        # Quotes a list of member names for a query specification.
+        def quote_mbrs(mbrs)
+            mbrs.map{ |mbr| quote_mbr(mbr) }
+        end
+
+
         # A default implementation for quoting members, which simply surrounds
         # individual member names with double-quotes.
-        def quote_mbrs(mbrs)
-            mbrs.map{ |mbr| %Q{"#{mbr}"} }
+        def quote_mbr(mbr)
+            %{"#{mbr}"}
         end
 
 

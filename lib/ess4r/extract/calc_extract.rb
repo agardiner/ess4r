@@ -4,23 +4,45 @@ class Essbase
     # the best performance on large extracts where no dynamic calcs are present.
     class CalcExtract < Extract
 
+        # Create a calc extract instance.
+        #
+        # Note: Calc extracts are more restrictive in terms of axis assignment
+        # than Report or MDX extracts. Only a single dimension which must be
+        # dense can appear on the column axis, while all other dimensions must
+        # appear on the row axis. Additionally, calc extracts cannot include
+        # attribute dimensions.
+        #
+        # @param cube [Cube] The cube from which to run the extract.
+        # @param extract_spec [Hash] A hash containing a list of member
+        #   specifications for each dimension. The hash may be provided in one
+        #   of two different forms:
+        #   - The keys of the hash are the dimensions, and the values are the
+        #     member specifications (which will be expanded via
+        #     Dimension#expand_members).
+        #   - The keys of the hash are axis specifiers containing :row (required)
+        #     and :column (required) keys, and the values are Hashes of
+        #     dimension => member specifications (which will be expanded via
+        #     Dimension#expand_members).
+        def initialize(cube, extract_spec, options = {})
+            super(cube, extract_spec, options)
+
+            # Create the calc script
+            convert_extract_spec_to_members(options)
+            report_sparse_dynamic_calcs(:calc, options)
+        end
+
+
         # Create a calc script to export data to a server file, and then download
         # the file to the local machine. The generated calc script consists of a
         # series of FIXes to select the members we want from each dimension.
         #
-        # @param extract_spec [Hash] A hash containing a list of member
-        #   specifications for each dimension. The keys of the hash are the
-        #   dimensions, and the values are the member specifications (which will
-        #   be expanded via Dimension#expand_members).
         # @param output_file [String] A path to where the output should be saved.
         # @param options [Hash] An options hash for controlling various facets
         #   of the extract process.
-        def extract_data(extract_spec, output_file, options = {})
+        def extract_data(output_file, options = {})
             log.info "Exporting #{@cube} data via calc script..."
 
-            # Create the calc script
-            convert_extract_spec_to_members(extract_spec, options)
-            report_sparse_dynamic_calcs(:calc, options)
+            # Generate a calculation script
             out_file, calc_script = generate_script(output_file, options)
             save_query_to_file(calc_script, options[:query_file], '.csc')
 

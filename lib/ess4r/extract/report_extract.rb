@@ -5,21 +5,37 @@ class Essbase
     # extract.
     class ReportExtract < Extract
 
+        # Create an extract instance.
+        #
+        # @param cube [Cube] The cube from which to run the extract.
+        # @param extract_spec [Hash] A hash containing a list of member
+        #   specifications for each dimension. The hash may be provided in one
+        #   of two different forms:
+        #   - The keys of the hash are the dimensions, and the values are the
+        #     member specifications (which will be expanded via
+        #     Dimension#expand_members).
+        #   - The keys of the hash are axis specifiers containing :pov (optional),
+        #     :page (optional), :row (required) and :column (required) keys, and
+        #     the values are Hashes of dimension => member specifications (which
+        #     will be expanded via Dimension#expand_members).
+        def initialize(cube, extract_spec, options = {})
+            super(cube, extract_spec, options)
+
+            # Create the report spec
+            convert_extract_spec_to_members(options)
+            report_sparse_dynamic_calcs(:report, options)
+            assign_axes(options)
+        end
+
+
         # Create and run a report script to export data.
         #
-        # @param extract_spec [Hash] A hash containing a list of member
-        #   specifications for each dimension. The keys of the hash are the
-        #   dimensions, and the values are the member specifications (which will
-        #   be expanded via Dimension#expand_members).
         # @param output_file [String] A path to where the output should be saved.
         # @param options [Hash] An options hash for controlling various facets
         #   of the extract process.
-        def extract_data(extract_spec, output_file, options = {})
+        def extract_data(output_file, options = {})
             log.info "Exporting #{@cube} data via report script..."
 
-            # Create the report spec
-            convert_extract_spec_to_members(extract_spec, options)
-            report_sparse_dynamic_calcs(:report, options)
             rep_script = generate_script(options)
             save_query_to_file(rep_script, options[:query_file], '.rep')
 

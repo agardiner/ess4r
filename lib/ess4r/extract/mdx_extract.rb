@@ -7,24 +7,24 @@ class Essbase
     # dynamic  calculations.
     class MdxExtract < Extract
 
-        # Create and run one or more MDX queries to export data.
+        # Create an extract instance.
         #
+        # @param cube [Cube] The cube from which to run the extract.
         # @param extract_spec [Hash] A hash containing a list of member
-        #   specifications for each dimension. The keys of the hash are the
-        #   dimensions, and the values are the member specifications (which will
-        #   be expanded via Dimension#expand_members).
-        # @param output_file [String] A path to where the output should be saved.
-        # @param options [Hash] An options hash for controlling various facets
-        #   of the extract process.
-        # @option options [String] :partition_dim The name of the dimension to
-        #   partition the query on.
-        # @option options [Integer] :partition_size The number of members of the
-        #   partition dimension to include in each MDX query.
-        def extract_data(extract_spec, output_file, options = {})
-            log.info "Exporting #{@cube} data via MDX..."
+        #   specifications for each dimension. The hash may be provided in one
+        #   of two different forms:
+        #   - The keys of the hash are the dimensions, and the values are the
+        #     member specifications (which will be expanded via
+        #     Dimension#expand_members).
+        #   - The keys of the hash are axis specifiers containing :pov (optional),
+        #     :page (optional), :row (required) and :column (required) keys, and
+        #     the values are Hashes of dimension => member specifications (which
+        #     will be expanded via Dimension#expand_members).
+        def initialize(cube, extract_spec, options = {})
+            super(cube, extract_spec, options)
 
-            # Create the MDX query
-            convert_extract_spec_to_members(extract_spec, options)
+            # Convert extract spec to member and axis assignments
+            convert_extract_spec_to_members(options)
             #mdx_setup_calcs(options)
             report_sparse_dynamic_calcs(:mdx, options)
 
@@ -53,6 +53,21 @@ class Essbase
                 end
             end
 =end
+            assign_axes(options)
+        end
+
+
+        # Create and run one or more MDX queries to export data.
+        #
+        # @param output_file [String] A path to where the output should be saved.
+        # @param options [Hash] An options hash for controlling various facets
+        #   of the extract process.
+        # @option options [String] :partition_dim The name of the dimension to
+        #   partition the query on.
+        # @option options [Integer] :partition_size The number of members of the
+        #   partition dimension to include in each MDX query.
+        def extract_data(output_file, options = {})
+            log.info "Exporting #{@cube} data via MDX..."
 
             # Split query into chunks that don't use too much memory
             partition_dim = options[:partition_dim] && @cube[options[:partition_dim]].name
@@ -90,15 +105,16 @@ class Essbase
                     data = cv.mdx_query(mdx_script)
                     #data.suppress_members = @suppress_members
                     #data.map_members = @member_name_maps
-                    #if cb = options[:output_handler]
-                    #    cb.call(data, i)
-                    #    count += data.record_count
-                    #else
+                    if cb = options[:output_handler]
+                        cb.call(data, i)
+                        count += data.record_count
+                    end
+                    if output_file
                         log.fine "Writing data to #{output_file}" if i == 0
                         count += data.to_file(output_file, output_options)
                         output_options[:file_mode] = 'a'
                         output_options[:include_header] = false
-                    #end
+                    end
                 end
             ensure
                 cv.close
@@ -109,8 +125,8 @@ class Essbase
 
         # A function for quoting members, which simply surrounds individual
         # member names with square brackets.
-        def quote_mbrs(mbrs)
-            mbrs.map{ |mbr| %Q{[#{mbr}]} }
+        def quote_mbr(mbr)
+            %Q{[#{mbr}]}
         end
 
 
