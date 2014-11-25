@@ -83,6 +83,24 @@ class Essbase
         end
 
 
+        # Finds a matching entry in +hsh+ that matches +key+, ignoring case
+        # and Symbol/String differences.
+        #
+        # @param hsh [Hash] The hash in which to find the value.
+        # @param key [String, Symbol] A String or Symbol key to find a match for.
+        # @param default [Object] The default value to return if no match is
+        #   found for the key.
+        # @return [Object] The matching value in +hsh+, or +default+ if no value
+        #   was found.
+        def get_hash_val(hsh, key, default = nil)
+            # Find the key used in the that matches the dimension name
+            return hsh[key] if hsh.has_key?(key)
+            search_key = key.to_s.downcase
+            matched_key = hsh.keys.find{ |k| k.to_s.downcase == search_key }
+            matched_key ? hsh[matched_key] : default
+        end
+
+
         # For any unknown method call, forward it to the underlying wrapped JAPI
         # object (if any).
         def method_missing(meth_name, *args)
