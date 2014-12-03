@@ -40,7 +40,6 @@ class Essbase
         # Load additional jar files required in embedded mode
         if aps_url =~ /^embedded$/i && !$LOADED_FEATURES.find{ |f| f =~ /ess_es_server.jar/ }
             require 'ess_es_server.jar'
-            require 'cpld.jar'
             require 'ojdl.jar'
 
             # Stop APS from dumping product info and internal logs to STDOUT
