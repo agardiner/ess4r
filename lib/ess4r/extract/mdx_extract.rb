@@ -126,7 +126,7 @@ class Essbase
         # A function for quoting members, which simply surrounds individual
         # member names with square brackets.
         def quote_mbr(mbr)
-            %Q{[#{mbr}]}
+            mbr[0] == '[' ? mbr : %Q{[#{mbr}]}
         end
 
 

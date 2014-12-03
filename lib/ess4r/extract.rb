@@ -137,7 +137,7 @@ class Essbase
                         else
                             mbrs = @cube[dim.name].expand_members(mbr_spec)
                             mbrs.map! do |mbr|
-                                mbr.name
+                                mbr.unique_name
                             end
                             mbr_list.concat(quote_mbrs(mbrs))
                         end
@@ -149,7 +149,7 @@ class Essbase
                         log.warning "No members specified for #{dim.name}; defaulting to #{dim.name}.Level0"
                         mbrs = dim[dim.name].leaves
                         mbrs.map! do |mbr|
-                            mbr.name
+                            mbr.unique_name
                         end
                         mbr_list = quote_mbrs(mbrs)
                     elsif default_missing_dims == :top
@@ -165,7 +165,7 @@ class Essbase
 
                 if mbr_list
                     mbr_list.uniq!
-                    dyn_calc = quote_mbrs(dim.select(&:dynamic_calc?).map(&:name)) & mbr_list
+                    dyn_calc = quote_mbrs(dim.select(&:dynamic_calc?).map(&:unique_name)) & mbr_list
                     if dyn_calc.size > 0 && (!include_dynamic_calcs ||
                                              (!include_sparse_dynamic_calcs && dim.sparse?))
                         mbr_list = mbr_list - dyn_calc

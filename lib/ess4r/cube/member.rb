@@ -6,29 +6,33 @@ class Essbase
     # instances of this class.
     class Member
 
-        # @return The Dimension object to which this member belongs.
+        # @return [Dimension] The Dimension object to which this member belongs.
         attr_reader :dimension
-        # @return The name of the member.
+        # @return [String] The name of the member.
         attr_reader :name
-        # @return The type of storage for this member, e.g. Store Data, Shared
-        #   Member etc
+        # @return [String] A qualified name that uniquely identifies this member
+        #   in the outline.
+        attr_reader :unique_name
+        # @return [String] The type of storage for this member, e.g. Store Data,
+        #   Shared Member etc
         attr_reader :share_option
-        # @return The consolidation operation to perform when aggregating this
-        #   member.
+        # @return [String] The consolidation operation to perform when aggregating
+        #   this member.
         attr_reader :consolidation_type
-        # @return The generation number of the member. Generations count upwards
-        #   from 1 as you descend the hierarchy from the dimension top member.
+        # @return [Fixnum] The generation number of the member. Generations count
+        #   upwards from 1 as you descend the hierarchy from the dimension top
+        #   member.
         attr_reader :generation_number
-        # @return The level number of the member. Levels count upwards from 0
-        #   starting from the leaf nodes and moving up the hierarchy.
+        # @return [Fixnum] The level number of the member. Levels count upwards
+        #   from 0 starting from the leaf nodes and moving up the hierarchy.
         attr_reader :level_number
-        # @return The formula for this member in the outline.
+        # @return [String] The formula for this member in the outline.
         attr_reader :formula
-        # @return The Member object that is the parent of this member. Nil if
-        # member is the root of the dimension.
+        # @return [Member] The Member object that is the parent of this member.
+        #   Nil if member is the root of the dimension.
         attr_reader :parent
-        # @return The Member object that is the main (or non-shared) instance of
-        # this shared member. Nil if this member is not shared.
+        # @return [Member] The Member object that is the main (or non-shared)
+        #  instance of this shared member. Nil if this member is not shared.
         attr_reader :non_shared_member
 
         alias_method :storage_type, :share_option
@@ -43,6 +47,7 @@ class Essbase
         def initialize(dim, mbr, alias_tbls)
             @dimension = dim
             @name = mbr.name
+            @unique_name = mbr.unique_name
             @aliases = {}
             alias_tbls.each{ |tbl| @aliases[tbl] = mbr.get_alias(tbl) }
             @share_option = mbr.share_option.to_s
