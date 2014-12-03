@@ -34,5 +34,10 @@ class TestExtract < Test::Unit::TestCase
                       include_headers: true, query_file: OUTPUT_DIR + 'mdx_extract.mdx')
     end
 
+    def test_rep_extract
+        @cube.extract(EXTRACT_SPEC, OUTPUT_DIR + 'rep_extract.txt',
+                      extract_method: :report,
+                      include_headers: true, query_file: OUTPUT_DIR + 'rep_extract.rep')
+    end
 end
 
