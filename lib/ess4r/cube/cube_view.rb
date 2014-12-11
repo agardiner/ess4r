@@ -4,6 +4,8 @@ class Essbase
     # generate grid-based retrievals of data from an Essbase database.
     class CubeView < Base
 
+        include_package 'com.essbase.api.dataquery'
+
 
         # Creates a new CubeView object to wrap the supplied +cube_view+ JAPI
         # object.
@@ -29,17 +31,24 @@ class Essbase
         #
         # @param mdx_stmt [String] An MDX statement to be executed against the
         #   database.
+        # @param options [Hash] An options hash.
+        # @option options [Boolean] :unique_names If true, unique member names
+        #   are returned instead of names. This option is only valid on more
+        #   recent versions of Essbase.
         # @return [DataSet] An MDX data set object that contains the returned
         #   data.
-        def mdx_query(mdx_stmt)
+        def mdx_query(mdx_stmt, options = {})
             require_relative 'mdx_data_set'
 
             op = try{ @cube_view.createIEssOpMdxQuery() }
-            try{ op.set_query_spec(mdx_stmt) }
-            instrument "mdx_query", mdx: mdx_stmt do
-                try{ @cube_view.perform_operation(op) }
+            if options[:unique_names] && IEssOpMdxQuery::EEssMemberIdentifierType.sm_values.size > 2
+                try{ op.setMemberIdentifierType(IEssOpMdxQuery::EEssMemberIdentifierType.UNIQUENAME) }
             end
-            MdxDataSet.new(try{ @cube_view.get_md_data_set })
+            try{ op.setQuerySpec(mdx_stmt) }
+            instrument "mdx_query", mdx: mdx_stmt do
+                try{ @cube_view.performOperation(op) }
+            end
+            MdxDataSet.new(try{ @cube_view.getMdDataSet })
         end
 
 
@@ -52,7 +61,7 @@ class Essbase
             op = @cube_view.createIEssOpCalculate()
             op.set(calc_str, false)
             instrument "calculate", calc: calc_str do
-                try{ @cube_view.perform_operation(op) }
+                try{ @cube_view.performOperation(op) }
             end
         end
 
