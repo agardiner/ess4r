@@ -69,7 +69,7 @@ class Essbase
         #
         # @return [Array] the names of the slicer dimension(s).
         def slicer_dimensions
-            @slicer && try{ @slicer.get_all_dimensions.map(&:name) } || []
+            @slicer && map_names(try{ @slicer.get_all_dimensions }) || []
         end
 
         # @note The page axis is rarely used; it is the axis on which multiple
@@ -89,7 +89,7 @@ class Essbase
         #
         # @return [Array] the names of the page dimension(s).
         def page_dimensions
-            @pages && try{ @pages.get_all_dimensions.map(&:name) } || []
+            @pages && map_names(try{ @pages.get_all_dimensions }) || []
         end
 
         # @return [Integer] a count of the number of row dimensions.
@@ -101,7 +101,7 @@ class Essbase
         #
         # @return [Array] the names of the row dimension(s).
         def row_dimensions
-            @rows && try{ @rows.get_all_dimensions.map(&:name) } || []
+            @rows && map_names(try{ @rows.get_all_dimensions }) || []
         end
 
         # @return [Integer] a count of the number of column dimensions.
@@ -113,7 +113,7 @@ class Essbase
         #
         # @return [Array] the names of the column dimension(s).
         def column_dimensions
-            @cols && try{ @cols.get_all_dimensions.map(&:name) } || []
+            @cols && map_names(try{ @cols.get_all_dimensions }) || []
         end
 
         # @!endgroup
