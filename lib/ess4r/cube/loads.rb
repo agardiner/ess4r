@@ -6,6 +6,9 @@ class Essbase
     # Define methods for loading data and building dimensions.
     module Loads
 
+        include_package 'com.essbase.api.datasource'
+
+
         # @!macro [new] load_notes
         #
         #    If records are rejected during the load, they can be written to the
