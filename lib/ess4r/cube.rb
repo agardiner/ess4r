@@ -75,6 +75,14 @@ class Essbase
 
         # @!group Calculation Methods
 
+        # Runs the default calculation for the cube.
+        def calc_default
+            instrument "calculate" do
+                try{ @cube.calculate }
+            end
+        end
+
+
         # Runs the +calc_string+ calculation against the cube.
         #
         # @param calc_str [String] A calculation script to be executed (the
