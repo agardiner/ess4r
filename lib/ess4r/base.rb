@@ -78,7 +78,7 @@ class Essbase
             if @instrument
                 @instrument.instrument("#{operation}.ess4r", payload, &blk)
             else
-                blk.call
+                blk.call payload
             end
         end
 
