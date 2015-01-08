@@ -3,7 +3,7 @@ require 'color_console/java_util_logger'
 require 'ess4r'
 
 
-class DataTransfer < Batch::Job::Base
+class DataTransfer < Batch::Job
 
     title 'Essbase Data Transfer Utility'
     purpose 'A utility for extracting data from one or more source Essbase cubes, and ' +
@@ -35,7 +35,7 @@ class DataTransfer < Batch::Job::Base
     end
 
 
-    desc 'Loads data to a cube from a file'
+    desc 'Loads data to a cube from a file (or files)'
     task :load_data, instance_expr: '${0}' do |lbl, cube, step|
         data_files = step.data_files? ? step.data_files : [step.data_file]
         data_files.each do |file|
@@ -61,7 +61,7 @@ class DataTransfer < Batch::Job::Base
 
 
     desc 'Runs a sequence of extract, load, and calc steps in a spec file'
-    job instance_expr: '${File.basename(arguments.spec, File.extname(arguments.spec))}' do
+    job instance_expr: '${File.basename(arguments.spec)}' do
         @subs = Batch::Config.new(arguments.subs)
         @spec = Batch::Config.load(arguments.spec, @subs, true)
         @conns = Batch::Config.new
@@ -95,6 +95,7 @@ class DataTransfer < Batch::Job::Base
     end
 
 end
+
 
 DataTransfer.run
 
