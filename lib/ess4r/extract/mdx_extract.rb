@@ -21,7 +21,7 @@ class Essbase
         #     the values are Hashes of dimension => member specifications (which
         #     will be expanded via Dimension#expand_members).
         def initialize(cube, extract_spec, options = {})
-            super(cube, extract_spec, options)
+            super(cube, extract_spec)
 
             # Convert extract spec to member and axis assignments
             convert_extract_spec_to_members(options)
@@ -85,10 +85,8 @@ class Essbase
             end
 
             template = generate_query(partition_dim, options)
-            output_options = {
-                  file_mode: 'w'
-            }.merge(options)
-
+            output_options = options.dup
+            output_options[:file_mode] = 'w' unless output_options[:file_mode]
 
             count = 0
             cv = @cube.open_cube_view

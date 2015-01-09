@@ -19,7 +19,7 @@ class Essbase
         #     the values are Hashes of dimension => member specifications (which
         #     will be expanded via Dimension#expand_members).
         def initialize(cube, extract_spec, options = {})
-            super(cube, extract_spec, options)
+            super(cube, extract_spec)
 
             # Create the report spec
             convert_extract_spec_to_members(options)

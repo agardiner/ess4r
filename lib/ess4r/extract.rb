@@ -47,7 +47,7 @@ class Essbase
         #     :page (optional), :row (required) and :column (required) keys, and
         #     the values are Hashes of dimension => member specifications (which
         #     will be expanded via Dimension#expand_members).
-        def initialize(cube, extract_spec, options = {})
+        def initialize(cube, extract_spec)
             super('extract')
             @cube = cube
             @extract_spec = extract_spec

@@ -24,7 +24,7 @@ class Essbase
         #     dimension => member specifications (which will be expanded via
         #     Dimension#expand_members).
         def initialize(cube, extract_spec, options = {})
-            super(cube, extract_spec, options)
+            super(cube, extract_spec)
 
             # Create the calc script
             convert_extract_spec_to_members(options)
