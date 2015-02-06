@@ -2,8 +2,8 @@ class Essbase
 
 
     # Implementation of IEssCustomMessageHandler to process Essbase messages.
-    # This implementation uses the logging capability in the Base superclass to
-    # log Essbase messages received from the server.
+    # This implementation uses java.util.Logging to log Essbase messages received
+    # from the Essbase server.
     #
     # By default certain less useful messages are suppressed from logging; this
     # can be controlled via the #suppress_message_nums property.
@@ -13,7 +13,7 @@ class Essbase
     # being logged at FINE level). If desired, the message number can be included
     # at the end of the message, and an optional connection id can be added to
     # the start of the message.
-    class MessageHandler < Base
+    class MessageHandler
 
         include com.essbase.api.session.IEssCustomMessageHandler
 
@@ -50,8 +50,16 @@ class Essbase
 
         # Create a new message handler for processing log messages from Essbase
         def initialize
-            super('essbase')
             @suppress_message_nums = DEFAULT_SUPPRESS_MSGS
+        end
+
+
+        # Lazily return a logger that can be used for logging.
+        #
+        # @note Lazy instantiation of the logger is important to prevent issues
+        #   with serialisation when connecting in 3-tier mode via an APS server.
+        def log
+            @log ||= Java::JavaUtilLogging::Logger.getLogger('ess4r.essbase')
         end
 
 
