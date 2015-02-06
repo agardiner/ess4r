@@ -11,6 +11,7 @@ class TestConnect < Test::Unit::TestCase
 
     def test_connect
         assert_equal(Essbase::Server, @srv.class)
+        assert(@srv.connections.size > 0)
     end
 
 end
