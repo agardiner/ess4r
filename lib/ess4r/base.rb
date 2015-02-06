@@ -18,7 +18,6 @@ class Essbase
     end
 
 
-
     # Base class for all Essbase JAPI wrapper objects; provides logging and
     # instrumentsion support, and a #try method for wrapping interactions via
     # the Java API, so that failures return a Ruby exception instead of a Java
@@ -35,6 +34,8 @@ class Essbase
     # about Essbase method calls. This is a no-op unless ActiveSupport
     # notifications are available.
     class Base
+
+        include_package 'com.essbase.api.base'
 
         attr_reader :log
 
@@ -102,11 +103,14 @@ class Essbase
 
 
         # For any unknown method call, forward it to the underlying wrapped JAPI
-        # object (if any).
+        # object (if any). If the JAPI method returns an IEssIterator, converts
+        # the content to a Ruby array.
         def method_missing(meth_name, *args)
             if @japi_instance_var_name &&
                 japi_obj = instance_variable_get(@japi_instance_var_name)
-                try{ japi_obj.send(meth_name, *args) }
+                res = try{ japi_obj.send(meth_name, *args) }
+                res = try{ res.getAll }.to_a if res.is_a?(IEssIterator)
+                res
             else
                 super
             end
