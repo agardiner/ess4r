@@ -25,10 +25,9 @@ class Essbase
 
             # Convert extract spec to member and axis assignments
             convert_extract_spec_to_members(options)
-            #mdx_setup_calcs(options)
+            mdx_setup_calcs(options)
             report_sparse_dynamic_calcs(:mdx, options)
 
-=begin
             if !col_dim && extract_spec[:pov]
                 extract_spec[:pov].keys.each do |dim|
                     if @extract_members[dim].size > 1
@@ -52,7 +51,7 @@ class Essbase
                     end
                 end
             end
-=end
+
             assign_axes(options)
         end
 
@@ -92,8 +91,8 @@ class Essbase
             cv = @cube.open_cube_view
             begin
                 partition_sets.each_with_index do |mbr_set, i|
-                    #yield ds.tag, i, partition_sets.size if block_given?
-                    #extract_mbrs[partition_dim] = mbr_set if partition_dim
+                    yield ds.tag, i, partition_sets.size if block_given?
+                    extract_mbrs[partition_dim] = mbr_set if partition_dim
                     if mbr_set
                         mdx_script = template.gsub("%{#{partition_dim}}", mbr_set.join(', '))
                     else
@@ -101,8 +100,8 @@ class Essbase
                     end
                     save_query_to_file(mdx_script, options[:query_file], '.mdx', i)
                     data = cv.mdx_query(mdx_script)
-                    #data.suppress_members = @suppress_members
-                    #data.map_members = @member_name_maps
+                    data.suppress_members = @suppress_members
+                    data.map_members = @member_name_maps
                     if cb = options[:output_handler]
                         cb.call(data, i)
                         count += data.record_count
@@ -128,7 +127,6 @@ class Essbase
         end
 
 
-=begin
         # Handle any sparse dynamic calc substitutions for MDX calcs, plus any
         # additional MDX calculations
         def mdx_setup_calcs(options)
@@ -180,7 +178,6 @@ class Essbase
                 end
             end
         end
-=end
 
 
         # Create an MDX query consisting of a series of CrossJoin's to combine the
