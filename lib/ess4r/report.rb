@@ -9,7 +9,7 @@ class Essbase
     # Although the data in a report comes from an Essbase extract, there are a
     # number of additional features provided in this class for formatting one or
     # more extracts into a report:
-    # - Members may need to be mapped to schedule-specific labels which are not
+    # - Members may need to be mapped to report-specific labels which are not
     #   the same as the Essbase alias.
     # - Data may need to be scaled, formatted, and sign-flipped appropriately
     #   for the measure.
@@ -130,7 +130,7 @@ class Essbase
         end
 
 
-        # Extract data for the schedule via MDX.
+        # Populate data for the report via the associated Extract.
         def populate(options = {})
             opts = options.merge(
                 suppress_missing: @suppress_missing,

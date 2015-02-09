@@ -7,7 +7,7 @@ class Essbase
         class MissingMap
 
             attr_reader :dimension, :map_name, :member, :reason
-            attr_accessor :schedule
+
 
             def initialize(dimension, map_name, member, reason = nil)
                 @dimension = dimension
@@ -16,9 +16,11 @@ class Essbase
                 @reason = reason || "No mapping found"
             end
 
+
             def <=>(other)
                 "#{@dimension}:#{@member}" <=> "#{other.dimension}:#{other.member}"
             end
+
 
             def to_s
                 "#{@reason} for#{@member ? " member #{@member} in" : ''
