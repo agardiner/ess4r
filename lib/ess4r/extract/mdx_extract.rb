@@ -192,11 +192,11 @@ class Essbase
 
             # Add any custom member calculations
             calc_mbrs = []
-            #calc_mbrs = @mdx_calcs.map do |dim, mbrs|
-            #    mbrs.map do |mbr, formula|
-            #        "  MEMBER [#{dim}].[#{mbr}] AS '#{formula}'"
-            #    end
-            #end.flatten
+            calc_mbrs = @mdx_calcs.map do |dim, mbrs|
+                mbrs.map do |mbr, formula|
+                    "  MEMBER [#{dim}].[#{mbr}] AS '#{formula}'"
+                end
+            end.flatten
             mbr_sets = (@page_dims + @row_dims + @col_dims).map do |dim|
                 if dim == partition_dim
                     "  SET [#{dim}Set] AS '{%{#{dim}}}'"

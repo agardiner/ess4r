@@ -46,5 +46,23 @@ class TestExtract < Test::Unit::TestCase
                       include_headers: true, query_file: OUTPUT_DIR + 'mdx_map_extract.mdx')
     end
 
+    def test_mdx_calc
+        spec = {
+            rows: {
+                Accounts: 'Accounts.Level0',
+                Product: 'Product.Level0',
+                Market: 'East.Children',
+                Scenario: '[ActBudVar]'
+            },
+            columns: {
+                Year: 'Year.Level0'
+            }
+        }
+        @cube.extract(spec, OUTPUT_DIR + 'mdx_calc_extract.txt',
+                      member_maps: {'Actual' => 'ACT'},
+                      mdx_calculations: {Scenario: {'ActBudVar' => '[Actual] - [Budget]'}},
+                      include_headers: true, query_file: OUTPUT_DIR + 'mdx_calc_extract.mdx')
+    end
+
 end
 
