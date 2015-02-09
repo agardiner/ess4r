@@ -39,5 +39,12 @@ class TestExtract < Test::Unit::TestCase
                       extract_method: :report,
                       include_headers: true, query_file: OUTPUT_DIR + 'rep_extract.rep')
     end
+
+    def test_mdx_map
+        @cube.extract(EXTRACT_SPEC, OUTPUT_DIR + 'mdx_map_extract.txt',
+                      member_maps: {'Actual' => 'ACT'},
+                      include_headers: true, query_file: OUTPUT_DIR + 'mdx_map_extract.mdx')
+    end
+
 end
 

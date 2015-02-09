@@ -27,15 +27,14 @@ class Essbase
             convert_extract_spec_to_members(options)
             mdx_setup_calcs(options)
             report_sparse_dynamic_calcs(:mdx, options)
+            assign_axes(options)
 
-            if !col_dim && extract_spec[:pov]
-                extract_spec[:pov].keys.each do |dim|
-                    if @extract_members[dim].size > 1
-                        # Move dimension from slicer to page axis, since it now has multiple members
-                        log.finer "Moving dimension #{dim} onto page axis"
-                        extract_spec[:pages] = Batch::Config.new unless extract_spec[:pages]
-                        extract_spec[:pages][dim] = extract_spec[:pov].delete(dim)
-                    end
+            @pov_dims.clone.each do |dim|
+                if @extract_members[dim].size > 1
+                    # Move dimension from slicer to page axis, since it now has multiple members
+                    log.finer "Moving dimension #{dim} onto page axis"
+                    @page_dims.unshift(dim)
+                    @pov_dims.delete(dim)
                 end
             end
 
@@ -52,7 +51,6 @@ class Essbase
                 end
             end
 
-            assign_axes(options)
         end
 
 
