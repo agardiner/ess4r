@@ -32,13 +32,20 @@ class Essbase
     # @param server [String] The Essbase server to connect to. May include an
     #   optional port number for when the Essbase server is not listening on the
     #   default port; use the form <server>:<port>.
+    #   To connect in embedded mode to the currently active server in an active/
+    #   passive cluster, you can specify the URL to the APS provider in the
+    #   following form:
+    #     http[s]://<aps_server>[:<port>]/aps/Essbase?ClusterName=<cluster>[&SecureMode=yes]
+    #   This will cause the JAPI to query the APS provider for the address of
+    #   the active Essbase node in the cluster, and then connect to that
+    #   server directly if the +aps_url+ is 'embedded' (the default).
     # @param aps_url [String] A URL to the APS server; usually of the form:
-    #   http(s)://<server>:<port>/aps/JAPI
+    #   http[s]://<server>:<port>/aps/JAPI
     #   If omitted, a direct connection to the Essbase server will be created
-    #   using embedded mode. This is the most flexible, since operations such
-    #   as data loads can use local files with a direct connection, but not via
-    #   APS. However, a direct connection requires that the Essbase server JAPI
-    #   jar files are avaiable, uses more memory, and requires that the Essbase
+    #   using embedded mode. Embedded mode is the most flexible, since operations
+    #   such as data loads can use local files with a direct connection, but not
+    #   via APS. However, an direct connection requires that the Essbase server
+    #   JAPI jar files are avaiable, uses more memory, and requires that the Essbase
     #   server port is reachable from the client. A connection via provider
     #   services (APS) is lighter-weight, and more likely to be usable from
     #   client machines outside the data centre, since it uses the same server
