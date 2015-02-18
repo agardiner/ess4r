@@ -190,7 +190,7 @@ class Essbase
 
         def missing_maps
             mm = @columns.map{ |ci| ci.missing_maps.values }.flatten.sort
-            mm.each{ |m| m.schedule = self.name }
+            mm.each{ |m| m.report = self.name }
             mm
         end
 

@@ -3,10 +3,11 @@ class Essbase
     class Report
 
         # Structure used to hold details of missing maps encountered while
-        # populating a schedule.
+        # populating a report.
         class MissingMap
 
             attr_reader :dimension, :map_name, :member, :reason
+            attr_accessor :report
 
 
             def initialize(dimension, map_name, member, reason = nil)

@@ -64,9 +64,13 @@ class Essbase
                             @report.extract.col_dims.join(', ')}) of extract"
                     end
                 when Array
-                    unk = @report.extract.col_dims.map(&:downcase) - @content.map(&:downcase)
+                    all_col_mbrs = @report.extract.col_dims.reduce([]) do |col_mbrs, col_dim|
+                        col_mbrs.concat(@report.extract.extract_members[col_dim].map(&:downcase))
+                    end
+                    unk = (@content.map(&:downcase) - all_col_mbrs).map{ |m| @content.find{ |c| m == c.downcase} }
                     if unk.size > 0
-                        raise ArgumentError, "Could not locate #{unk.join(', ')} on columns of extract"
+                        raise ArgumentError, "Could not locate any column in the extract for report column #{
+                            idx + 1} '#{@header}'. Unknown members are: #{unk.join(', ')}"
                     end
                     @axis = :column
                 else
@@ -109,7 +113,7 @@ class Essbase
                             case mbr_lbl
                             when /^["\[]?(.+)["\]]?\.(Level0|Leaves|I?Children|I?Descendants|I?Ancestors)$/i
                                 # Memer name with expansion macro
-                                mbr = @cube[@row_override_dim][$1]
+                                mbr = @report.cube[@row_override_dim][$1]
                                 raise "Unrecognised #{@row_override_dim} member '#{$1}'" unless mbr
                                 exp_mbrs = mbr.send($2.downcase.intern)
                                 exp_mbrs.each do |exp_mbr|
