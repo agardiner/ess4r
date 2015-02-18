@@ -108,7 +108,7 @@ class Essbase
                     @row_override_dim = ov.dimension? ? ov.dimension : @content
                     @row_override_mbrs = {}
                     ov.formats.each do |lbl, defn|
-                        mbrs = defn.dup.delete(:members)
+                        mbrs = defn.dup.delete(:members) || []
                         defn.scale = @scale unless defn.scale?
                         defn.decimal_places = @decimal_places unless defn.decimal_places?
                         defn.sign = @sign unless defn.sign?
