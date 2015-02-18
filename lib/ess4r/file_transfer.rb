@@ -123,7 +123,7 @@ class Essbase
         def list_files(file_spec = '*')
             filter = Regexp.new("^#{file_spec.gsub('.', '\.').gsub('?', '.').gsub('*', '.*')}$",
                                 Regexp::IGNORECASE)
-            items = self.get_olap_file_objects(Essbase::IEssOlapFileObject.TYPE_ALL).get_all.sort_by(&:name)
+            items = self.getOlapFileObjects(Essbase::IEssOlapFileObject.TYPE_ALL).sort_by(&:name)
             files = []
             items.each do |item|
                 next unless item.type != 8192 && (filter.nil? || item.name =~ filter)

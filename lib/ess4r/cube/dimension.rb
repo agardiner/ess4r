@@ -145,7 +145,7 @@ class Essbase
                     mbrs.concat(rels)
                 when /[@:,]/
                     # An Essbase calc function or range - execute query and use results to find Member objects
-                    mbr_sel = @cube.open_member_selection("MemberQuery")
+                    mbr_sel = try{ @cube.open_member_selection("MemberQuery") }
                     begin
                         mbr_sel.execute_query(<<-EOQ.strip, spec)
                             <OutputType Binary
