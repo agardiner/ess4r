@@ -44,6 +44,9 @@ class Essbase
                 @filter_key = get_hash_val(col_cfg, :filter_key)
 
                 # Determine the axis the column content will be found on in the MDX resultset
+                # Note: We don't try to determine the column at this point, as it is liable to
+                # move due to suppression etc; instead, we will locate the actual column once
+                # data is returned.
                 case @content
                 when NilClass
                     @axis = :none

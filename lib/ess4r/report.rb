@@ -84,24 +84,33 @@ class Essbase
             # Create columns for output/layout
             idx = 0
             @columns = []
+            errors = []
             layout.each do |col|
-                ci = Column.new(self, col, all_maps, idx)
-                if ci.axis == :row
-                    if @include_names
-                        ci_tc = Column.new(self, col, nil, idx)
-                        @columns << ci_tc
-                        idx += 1
+                begin
+                    ci = Column.new(self, col, all_maps, idx)
+                    if ci.axis == :row
+                        if @include_names
+                            ci_tc = Column.new(self, col, nil, idx)
+                            @columns << ci_tc
+                            idx += 1
+                        end
+                        if @include_aliases
+                            ci_al = Column.new(self, col, :alias, idx)
+                            @columns << ci_al
+                            idx += 1
+                        end
                     end
-                    if @include_aliases
-                        ci_al = Column.new(self, col, :alias, idx)
-                        @columns << ci_al
-                        idx += 1
-                    end
+                    @columns << ci
+                    @sort_required ||= ci.sort_order
+                    @filter_required ||= ci.filter_key?
+                rescue ArgumentError => ex
+                    errors << ex.message
                 end
-                @columns << ci
                 idx += 1
-                @sort_required ||= ci.sort_order
-                @filter_required ||= ci.filter_key?
+            end
+            unless errors.empty?
+                raise ArgumentError, "There are #{errors.size} errors in the report layout:\n- " +
+                    errors.join("\n- ")
             end
             @filter_count = @filter_required && spec.filter
             @row_count = 0
