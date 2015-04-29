@@ -33,6 +33,12 @@ class Essbase
         end
 
 
+        def disconnect
+            try{ @server.disconnect }
+            @server = nil
+        end
+
+
         # Open the specified application/database, and return a Cube object for
         # interacting with it.
         #
