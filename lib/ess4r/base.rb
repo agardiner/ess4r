@@ -116,6 +116,17 @@ class Essbase
             end
         end
 
+
+        # For any unknown method, check if the underlying object responds to it.
+        def respond_to?(mthd_name)
+            if @japi_instance_var_name &&
+                japi_obj = instance_variable_get(@japi_instance_var_name)
+                try{ japi_obj.respond_to?(meth_name) }
+            else
+                super
+            end
+        end
+
     end
 
 end
