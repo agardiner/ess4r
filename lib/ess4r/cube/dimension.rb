@@ -137,7 +137,7 @@ class Essbase
                     raise ArgumentError, "Unrecognised #{self.name} member '#{$1}' in #{spec}" unless mbr
                     rels = mbr.relative($4.to_i * sign, !!$2)
                     mbrs.concat(rels)
-                when /^['"\[]?(.+?)['"\]]?\.UDA\(['"]?(.+)['"]?\)$/i
+                when /^['"\[]?(.+?)['"\]]?\.UDA\(['"]?(.+?)['"]?\)$/i
                     # Memer name with UDA expansion macro
                     mbr = self[$1]
                     raise ArgumentError, "Unrecognised #{self.name} member '#{$1}' in #{spec}" unless mbr
@@ -172,6 +172,7 @@ class Essbase
                     raise ArgumentError, "Unrecognised #{self.name} member '#{spec}'"
                 end
             end
+            raise ArgumentError, "Member specification for #{self.name} returned no members" if mbrs.size == 0
             mbrs
         end
 
