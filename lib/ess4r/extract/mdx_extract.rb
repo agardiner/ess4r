@@ -90,7 +90,7 @@ class Essbase
             begin
                 partition_sets.each_with_index do |mbr_set, i|
                     yield ds.tag, i, partition_sets.size if block_given?
-                    extract_mbrs[partition_dim] = mbr_set if partition_dim
+                    @extract_members[partition_dim] = mbr_set if partition_dim
                     if mbr_set
                         mdx_script = template.gsub("%{#{partition_dim}}", mbr_set.join(', '))
                     else
@@ -109,7 +109,7 @@ class Essbase
                             log.fine "Writing data to #{output_file}" if count == 0
                             count += data.to_file(output_file, output_options)
                             output_options[:file_mode] = 'a'
-                            output_options[:include_header] = false
+                            output_options[:include_headers] = false
                         end
                     end
                 end
