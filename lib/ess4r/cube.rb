@@ -136,7 +136,7 @@ class Essbase
 
 
         # Extract data from the cube to an +output_file+.
-        def extract(extract_spec, output_file, options = {})
+        def extract(extract_spec, output_file, options = {}, &blk)
             extractor = case options.fetch(:extract_method, :mdx)
             when :report
                 Essbase::ReportExtract.new(self, extract_spec, options)
@@ -147,7 +147,7 @@ class Essbase
             else
                 raise ArgumentError, "Unrecognised extract_method: #{options[:extract_method]}"
             end
-            extractor.extract_data(output_file, options)
+            extractor.extract_data(output_file, options, &blk)
         end
 
 

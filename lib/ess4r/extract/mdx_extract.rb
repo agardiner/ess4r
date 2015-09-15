@@ -89,7 +89,7 @@ class Essbase
             cv = @cube.open_cube_view
             begin
                 partition_sets.each_with_index do |mbr_set, i|
-                    yield ds.tag, i, partition_sets.size if block_given?
+                    yield @cube, i, partition_sets.size if block_given?
                     @extract_members[partition_dim] = mbr_set if partition_dim
                     if mbr_set
                         mdx_script = template.gsub("%{#{partition_dim}}", mbr_set.join(', '))
