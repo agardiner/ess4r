@@ -105,10 +105,10 @@ class Essbase
         # For any unknown method call, forward it to the underlying wrapped JAPI
         # object (if any). If the JAPI method returns an IEssIterator, converts
         # the content to a Ruby array.
-        def method_missing(meth_name, *args)
+        def method_missing(mthd_name, *args)
             if @japi_instance_var_name &&
                 japi_obj = instance_variable_get(@japi_instance_var_name)
-                res = try{ japi_obj.send(meth_name, *args) }
+                res = try{ japi_obj.send(mthd_name, *args) }
                 res = try{ res.getAll }.to_a if res.is_a?(IEssIterator)
                 res
             else
@@ -121,7 +121,7 @@ class Essbase
         def respond_to?(mthd_name)
             if @japi_instance_var_name &&
                 japi_obj = instance_variable_get(@japi_instance_var_name)
-                try{ japi_obj.respond_to?(meth_name) }
+                try{ japi_obj.respond_to?(mthd_name) }
             else
                 super
             end
