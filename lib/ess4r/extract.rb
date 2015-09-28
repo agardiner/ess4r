@@ -1,4 +1,5 @@
 require 'set'
+require 'fileutils'
 
 
 class Essbase
@@ -321,6 +322,7 @@ class Essbase
                 log.finest "Extract script:\n#{query}"
                 ext_re = Regexp.new("\\#{extension}$", Regexp::IGNORECASE)
                 file_name += extension unless file_name =~ ext_re
+                FileUtils.mkdir_p(File.dirname(file_name))
                 File.open(file_name, query_num == 0 ? 'w' : 'a') do |f|
                     f.puts "\n---\n\n" if query_num > 0
                     f.puts(query)
