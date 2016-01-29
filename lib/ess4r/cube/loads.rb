@@ -103,6 +103,7 @@ class Essbase
                 try{ @cube.begin_dataload(true, false, abort_on_error, rules_file,
                                            IEssOlapFileObject.TYPE_RULES) }
                 data.each do |line|
+                    line = line.join("\t") + "\n" if line.is_a?(Array)
                     try{ @cube.send_string(line) }
                 end
                 rejects = try{ @cube.end_dataload() }
