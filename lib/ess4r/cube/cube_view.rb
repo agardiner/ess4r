@@ -35,6 +35,8 @@ class Essbase
         # @option options [Boolean] :unique_names If true, unique member names
         #   are returned instead of names. This option is only valid on more
         #   recent versions of Essbase.
+        # @option options [Boolean] :aliases If true, aliases from the current
+        #   alias table are returned instead of names.
         # @return [DataSet] An MDX data set object that contains the returned
         #   data.
         def mdx_query(mdx_stmt, options = {})
@@ -42,7 +44,9 @@ class Essbase
 
             op = try{ @cube_view.createIEssOpMdxQuery() }
             if options[:unique_names] && IEssOpMdxQuery::EEssMemberIdentifierType.sm_values.size > 2
-                try{ op.setMemberIdentifierType(IEssOpMdxQuery::EEssMemberIdentifierType.UNIQUENAME) }
+                try{ op.setMemberIdentifierType(IEssOpMdxQuery::EEssMemberIdentifierType::UNIQUENAME) }
+            elsif options[:aliases]
+                try{ op.setMemberIdentifierType(IEssOpMdxQuery::EEssMemberIdentifierType::ALIAS) }
             end
             try{ op.setQuerySpec(mdx_stmt) }
             instrument "mdx_query", mdx: mdx_stmt do
