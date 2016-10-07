@@ -29,14 +29,15 @@ class Essbase
         #   index of the column in this result set, and the :type entry indicates
         #   the type of data in that column (+:string+, +:int+, +:long+, +:boolean+,
         #   +:double+, etc)
-        def column_info(*cols)
+        def column_info(cols=[])
             col_info = {}
             (1..(@result_set.column_count)).each do |col|
                 col_name = @result_set.column_name(col)
                 if cols.empty? || cols.include?(col_name)
+                    ct = @result_set.column_type(col)
                     col_info[col_name] = {
                         :index => col,
-                        :type => @result_set.column_type(col).string_value.downcase.intern
+                        :type => (ct && ct.string_value.downcase.intern) || :long
                     }
                 end
             end
@@ -53,8 +54,8 @@ class Essbase
         #
         # @param cols [Array<String>] An optional list of columns to return. If
         #    specified, only these columns are returned.
-        def to_hash(*cols)
-            col_info = column_info(*cols)
+        def to_hash(cols=[])
+            col_info = column_info(cols)
             rows = []
             while try { @result_set.next } do
                 row = []
@@ -85,8 +86,8 @@ class Essbase
         #
         # @param cols [Array<String>] An optional list of columns to return. If
         #    specified, only these columns are returned.
-        def to_a(*cols)
-            col_info = column_info(*cols)
+        def to_a(cols=[])
+            col_info = column_info(cols)
             rows = []
             rows << col_info.keys
             while try { @result_set.next } do

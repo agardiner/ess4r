@@ -6,6 +6,10 @@ class Essbase
     # Represents a MaxL session
     class Maxl < Base
 
+        # A count of the number of records in any result set from the last query
+        # submitted.
+        attr_reader :count
+
 
         # Instantiate a MaxL session.
         #
@@ -16,6 +20,7 @@ class Essbase
         def initialize(maxl_session, message_handler)
             super("@maxl", maxl_session)
             @message_handler = message_handler
+            @count = nil
         end
 
 
@@ -46,7 +51,7 @@ class Essbase
                 log.severe "Error in Maxl statement: #{stmt}"
                 raise
             end
-            if process_messages
+            if @count = process_messages
                 result_set
             end
         end
