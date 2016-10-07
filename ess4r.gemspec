@@ -1,8 +1,8 @@
 GEMSPEC = Gem::Specification.new do |s|
     s.name = "ess4r"
-    s.version = "0.1"
+    s.version = "0.2"
     s.authors = ["Adam Gardiner"]
-    s.date = "2014-11-17"
+    s.date = "2016-10-07"
     s.summary = "Ess4R is a library for interacting with Hyperion Essbase"
     s.description = <<-EOQ
         Ess4R is a Ruby wrapper over the Java API for Oracle's Hyperion Essbase.
