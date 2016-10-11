@@ -58,7 +58,7 @@ class Essbase
             end
 
             if defined?(ActiveSupport::Notifications)
-                @instrument = ActiveSupprt::Notifications
+                @instrument = ActiveSupport::Notifications
             end
         end
 

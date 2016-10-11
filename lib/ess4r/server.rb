@@ -39,6 +39,23 @@ class Essbase
         end
 
 
+        # Open the specified application, and return an Application object for
+        # interacting with it.
+        #
+        # @param ess_app [String] Essbase application name.
+        # @return [Application] An Application object for interacting with the
+        #   specified application.
+        def open_app(ess_app)
+            require_relative 'application'
+
+            log.fine "Opening Essbase application #{ess_app}"
+            app = nil
+            instrument "open_app", app: ess_app do
+                app = Application.new(try{ @server.get_application(ess_app) })
+            end
+        end
+
+
         # Open the specified application/database, and return a Cube object for
         # interacting with it.
         #
