@@ -166,10 +166,12 @@ class Essbase
 
                 if mbr_list
                     mbr_list.uniq!
-                    dyn_calc = quote_mbrs(dim.select(&:dynamic_calc?).map(&:unique_name)) & mbr_list
+                    dyn_calc = dim.select(&:dynamic_calc?).select do |mbr|
+                        mbr_list.include?(quote_mbr(mbr.unique_name))
+                    end
                     if dyn_calc.size > 0 && (!include_dynamic_calcs ||
                                              (!include_sparse_dynamic_calcs && dim.sparse?))
-                        mbr_list = mbr_list - dyn_calc
+                        mbr_list = mbr_list - quote_mbrs(dyn_calc.map(&:unique_name))
                         log.warning "Removed #{dyn_calc.size} dynamic calc members from #{dim.name} member set"
                         if mbr_list.size == 0
                             raise ArgumentError, "Removing dynamic calc members from #{dim.name} leaves an empty set"
