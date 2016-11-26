@@ -47,6 +47,12 @@ class Essbase
                 try{ op.setMemberIdentifierType(IEssOpMdxQuery::EEssMemberIdentifierType::UNIQUENAME) }
             elsif options[:aliases]
                 try{ op.setMemberIdentifierType(IEssOpMdxQuery::EEssMemberIdentifierType::ALIAS) }
+                if options[:alias_table] && options[:alias_table] != try{ @cube_view.getAliasTable() }
+                    try{
+                        @cube_view.setAliasTable(options[:alias_table])
+                        @cube_view.updatePropertyValues()
+                    }
+                end
             end
             try{ op.setQuerySpec(mdx_stmt) }
             instrument "mdx_query", mdx: mdx_stmt do
