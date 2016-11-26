@@ -307,7 +307,8 @@ class Essbase
         #   if headers are included; :grid or :file (@see #column_headers).
         #   Defaults to :file.
         # @option options [Boolean] :quote_members Whether or not to enclose
-        #   member names in quotes. Defaults to false.
+        #   member names in quotes. Defaults to nil, which means member names are
+        #   are only quoted if they contain the delimiter character(s).
         # @option options [String] :missing_val the value to be output when a
         #   #Missing value exists in a cell. Defaults to '-'.
         # @option options [String] :file_mode the mode to open the output file
@@ -318,7 +319,7 @@ class Essbase
             delimiter = options.fetch(:delimiter, "\t")
             include_headers = options.fetch(:include_headers, true)
             header_style = options.fetch(:header_style, :file)
-            quote_mbrs = options.fetch(:quote_members, false)
+            quote_mbrs = options.fetch(:quote_members, nil)
             missing_val = options.fetch(:missing_val, '-')
             file_mode = options.fetch(:file_mode, "w")
             decimals = (options[:decimals] || options[:decimal_places])
@@ -331,7 +332,9 @@ class Essbase
                     row = row.map do |cell|
                         case cell
                         when String
-                            quote_mbrs ? %Q{"#{cell}"} : cell
+                            quote_mbrs || (quote_mbrs.nil? && cell.include?(delimiter)) ?
+                                %Q{"#{cell}"} :
+                                cell
                         when Fixnum, BigDecimal, Float
                             decimals ? decimals % cell : cell
                         else missing_val
