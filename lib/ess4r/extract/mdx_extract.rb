@@ -216,7 +216,7 @@ class Essbase
             mdx = <<-EOQ.gsub(/^ {16}/, '')
                 WITH
                 #{with_stmts}
-                SELECT#{page_spec.length > 0 ? "#{non_empty_spec}#{page_spec} ON PAGES," : ''}
+                SELECT#{page_spec.length > 0 ? " #{non_empty_spec}#{page_spec} ON PAGES," : ''}
                   #{non_empty_spec}#{row_spec} ON ROWS,
                   #{col_spec} ON COLUMNS
                 #{pov_spec}
