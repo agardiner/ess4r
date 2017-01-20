@@ -99,18 +99,19 @@ class Essbase
                     save_query_to_file(mdx_script, options[:query_file], '.mdx', i)
                     data = cv.mdx_query(mdx_script)
                     if data.record_count > 0
+                        data.suppress_zeros = options[:suppress_zeros]
                         data.suppress_members = @suppress_members
                         data.map_members = @member_name_maps
                         if cb = options[:output_handler]
                             cb.call(data, i)
                             count += data.record_count
                         end
-                        if output_file
-                            log.fine "Writing data to #{output_file}" if count == 0
-                            count += data.to_file(output_file, output_options)
-                            output_options[:file_mode] = 'a'
-                            output_options[:include_headers] = false
-                        end
+                    end
+                    if output_file
+                        log.fine "Writing data to #{output_file}" if count == 0
+                        count += data.to_file(output_file, output_options)
+                        output_options[:file_mode] = 'a'
+                        output_options[:include_headers] = false
                     end
                 end
             ensure

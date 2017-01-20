@@ -6,6 +6,11 @@ class Essbase
     # Represents the results of an MDX query.
     class MdxDataSet < Base
 
+        # Determines whether to return rows that contain only zeros (or missing).
+        # Default is true.
+        attr_accessor :suppress_zeros
+
+
         attr_reader :suppress_members, :map_members
 
         # @!attribute suppress_members
@@ -252,15 +257,19 @@ class Essbase
         #   header row is being yielded.
         def each(include_headers = true, header_style = :grid)
             col_count = column_count
-            cells_per_page = row_count * col_count if row_count > 0
+            cells_per_page = row_count * col_count
             row = nil
             ord = 0
             limit = try{ @data_set.get_cell_count }
             @record_count = 0
-            while ord < limit
+            while ord < limit || ord == 0
                 if cells_per_page
                     # Data set has pages
-                    page_num, page_rem = ord.divmod(cells_per_page)
+                    if cells_per_page == 0
+                        page_num, page_rem = 0, 0
+                    else
+                        page_num, page_rem = ord.divmod(cells_per_page)
+                    end
                     if page_rem == 0
                         # New page
                         if skip_tuple?(@pages, page_num)
@@ -276,16 +285,20 @@ class Essbase
                 else
                     page_rem = ord
                 end
+                break if ord == 0 && limit == 0
 
                 row_num = page_rem / col_count
                 unless skip_tuple?(@rows, row_num)
                     row = row_members(row_num)
+                    non_zero = !@suppress_zeros
                     (0...col_count).each do |col_num|
                         next if @suppress_cols && @suppress_cols[col_num]
-                        row << (try{ @data_set.is_missing_cell(ord + col_num) } ?
-                                nil : try{ @data_set.cell_value(ord + col_num) })
+                        val = (try{ @data_set.is_missing_cell(ord + col_num) } ?
+                               nil : try{ @data_set.cell_value(ord + col_num) })
+                        row << val
+                        non_zero ||= (val && val != 0)
                     end
-                    yield row
+                    yield row if non_zero
                     @record_count += 1
                 end
                 ord += col_count
