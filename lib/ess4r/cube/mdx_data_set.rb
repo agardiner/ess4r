@@ -180,6 +180,25 @@ class Essbase
         # @!endgroup
 
 
+        # Returns the column ordinal for the column with the specified header(s)
+        # in a grid that consists of column and row headers plus data.
+        #
+        # @param names One or more column header labels identifying the column
+        #   to locate.
+        def column_ordinal(*names)
+            if names.length == 1
+                if idx = row_dimensions.map(&:downcase).index(names.first.downcase)
+                    return idx
+                end
+            end
+            (0...column_count).each do |col|
+                if column_members(col).map(&:downcase) == names.map(&:downcase)
+                    return row_dimension_count + col
+                end
+            end
+        end
+
+
         # Returns an array of arrays, representing the column headers of the
         # grid. The array contains an array for each row of column headers.
         #
@@ -217,6 +236,37 @@ class Essbase
                 end
             end
             headers
+        end
+
+
+        # Returns the cell contents in the grid at the specified row and column
+        # (0-based).
+        #
+        # @param row The ordinal of the row
+        # @param col The ordinal of the column
+        # @param page The ordinal of the page
+        def [](row, col, page=0)
+            if row < column_dimension_count
+                # In column headers
+                if col >= row_dimension_count
+                    row_dimensions[col - row_dimension_count]
+                else
+                    nil
+                end
+            else
+                row -= row_dimension_count
+                if col < row_dimension_count
+                    # In row headers
+                    row_members[row]
+                else
+                    # In data section
+                    col -= row_dimension_count
+                    ord = row * column_count + col
+                    ord += row_count * col_count * page if page > 0
+                    (try{ @data_set.is_missing_cell(ord) } ?
+                        nil : try{ @data_set.cell_value(ord) })
+                end
+            end
         end
 
 
