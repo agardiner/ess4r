@@ -145,14 +145,14 @@ class Essbase
                         # Map calculated member name back to substituted member name
                         @member_name_maps["#{dyn_mbr}_calc"] = dyn_mbr.name
                         # Replace substituted member in retrieval member set
-                        mbrs[dim].map!{ |ext_mbr| "[#{dyn_mbr}]" == ext_mbr ? "[#{dyn_mbr}_calc]" : ext_mbr }
+                        @extract_members[dim].map!{ |ext_mbr| "[#{dyn_mbr}]" == ext_mbr ? "[#{dyn_mbr}_calc]" : ext_mbr }
                         # Add data members used in MDX calculation to the retrieval
                         data_mbrs = @cube[dim].expand_members(calcs.data_members).map(&:name)
                         data_mbrs.each do |mbr|
                             quoted_mbr = "[#{mbr}]"
-                            unless mbrs[dim].include?(quoted_mbr)
+                            unless @extract_memmbers[dim].include?(quoted_mbr)
                                 log.finer "Adding #{dim} #{mbr} to extract to provide data for MDX calculation"
-                                mbrs[dim] << quoted_mbr
+                                @extract_members[dim] << quoted_mbr
                                 # Suppress data member not in extract, but needed for calc
                                 @suppress_members << mbr
                             end
@@ -211,7 +211,8 @@ class Essbase
 
             # Determine what suppression options to use
             non_empty = options.fetch(:suppress_missing, true)
-            non_empty_blocks = non_empty && !options.fetch(:include_sparse_dynamic_calcs, false)
+            non_empty_blocks = non_empty && (!options.fetch(:include_sparse_dynamic_calcs, false) ||
+                                             @sparse_dynamic_calcs.size == 0)
             non_empty_spec = "#{non_empty_blocks ? 'NONEMPTYBLOCK ' : ''}#{non_empty ? 'NON EMPTY ' : ''}"
 
             mdx = <<-EOQ.gsub(/^ {16}/, '')
