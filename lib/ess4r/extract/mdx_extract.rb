@@ -104,15 +104,15 @@ class Essbase
                         data.map_members = @member_name_maps
                         if cb = options[:output_handler]
                             cb.call(data, i)
-                            count += data.record_count
                         end
                     end
                     if output_file
                         log.fine "Writing data to #{output_file}" if i == 0
-                        count += data.to_file(output_file, output_options)
+                        data.to_file(output_file, output_options)
                         output_options[:file_mode] = 'a'
                         output_options[:include_headers] = false
                     end
+                    count += data.record_count
                 end
             ensure
                 cv.close
