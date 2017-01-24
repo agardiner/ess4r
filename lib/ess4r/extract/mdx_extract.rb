@@ -108,7 +108,7 @@ class Essbase
                         end
                     end
                     if output_file
-                        log.fine "Writing data to #{output_file}" if count == 0
+                        log.fine "Writing data to #{output_file}" if i == 0
                         count += data.to_file(output_file, output_options)
                         output_options[:file_mode] = 'a'
                         output_options[:include_headers] = false
