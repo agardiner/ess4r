@@ -196,6 +196,8 @@ class Essbase
                     return row_dimension_count + col
                 end
             end
+            raise ArgumentError, "No column in grid matches #{names.join(', ')}.\n" +
+                "Available columns are: #{column_headers(:grid).join(', ')}"
         end
 
 
