@@ -136,7 +136,7 @@ class Essbase
                             # A [quoted] MDX member - pass through as is, as it may be a calculated mbr
                             mbr_list << mbr_spec
                         else
-                            mbrs = @cube[dim.name].expand_members(mbr_spec)
+                            mbrs = @cube[dim.name].expand_members(mbr_spec, raise_if_empty: false)
                             mbrs.map! do |mbr|
                                 mbr.unique_name
                             end

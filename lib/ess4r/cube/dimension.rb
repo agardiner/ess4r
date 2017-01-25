@@ -118,7 +118,7 @@ class Essbase
         #   .Children, .Leaves, .Descendants, etc
         # @return [Array<Member>] An array of Member objects representing the
         #   members that satisfy +mbr_spec+.
-        def expand_members(mbr_spec)
+        def expand_members(mbr_spec, options={})
             retrieve_members unless @members
             mbr_spec = [mbr_spec].flatten
             mbrs = []
@@ -172,7 +172,9 @@ class Essbase
                     raise ArgumentError, "Unrecognised #{self.name} member '#{spec}'"
                 end
             end
-            raise ArgumentError, "Member specification for #{self.name} returned no members" if mbrs.size == 0
+            if mbrs.size == 0 && options.fetch(:raise_if_empty, true)
+                raise ArgumentError, "Member specification #{mbr_spec} for #{self.name} returned no members"
+            end
             mbrs
         end
 
