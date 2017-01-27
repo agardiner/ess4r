@@ -350,8 +350,10 @@ class Essbase
                         row << val
                         non_zero ||= (val && val != 0)
                     end
-                    yield row if non_zero
-                    @record_count += 1
+                    if non_zero
+                        yield row
+                        @record_count += 1
+                    end
                 end
                 ord += col_count
             end
