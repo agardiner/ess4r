@@ -100,6 +100,7 @@ class Essbase
                     data = cv.mdx_query(mdx_script)
                     if data.record_count > 0
                         data.suppress_zeros = options[:suppress_zeros]
+                        data.decimals = options[:decimals] || options[:decimal_places]
                         data.suppress_members = @suppress_members
                         data.map_members = @member_name_maps
                         if cb = options[:output_handler]

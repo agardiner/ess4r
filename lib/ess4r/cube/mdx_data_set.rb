@@ -10,6 +10,10 @@ class Essbase
         # Default is true.
         attr_accessor :suppress_zeros
 
+        # Control the number of decimal places output
+        attr_accessor :decimals
+        alias_method :decimal_places, :decimals
+        alias_method :decimal_places=, :decimals=
 
         attr_reader :suppress_members, :map_members
 
@@ -265,8 +269,10 @@ class Essbase
                     col -= row_dimension_count
                     ord = row * column_count + col
                     ord += row_count * col_count * page if page > 0
-                    (try{ @data_set.is_missing_cell(ord) } ?
-                        nil : try{ @data_set.cell_value(ord) })
+                    val = (try{ @data_set.is_missing_cell(ord) } ?
+                           nil : try{ @data_set.cell_value(ord) })
+                    val = val.round(@decimals) if val && @decimals
+                    val
                 end
             end
         end
@@ -347,6 +353,7 @@ class Essbase
                         next if @suppress_cols && @suppress_cols[col_num]
                         val = (try{ @data_set.is_missing_cell(ord + col_num) } ?
                                nil : try{ @data_set.cell_value(ord + col_num) })
+                        val = val.round(@decimals) if val && @decimals
                         row << val
                         non_zero ||= (val && val != 0)
                     end
@@ -389,7 +396,7 @@ class Essbase
             quote_mbrs = options.fetch(:quote_members, nil)
             missing_val = options.fetch(:missing_val, '-')
             file_mode = options.fetch(:file_mode, "w")
-            decimals = (options[:decimals] || options[:decimal_places])
+            decimals = (options[:decimals] || options.fetch(:decimal_places, @decimals))
             decimals = "%.#{decimals}f" if decimals
 
             file = File.new(file_name, file_mode)
