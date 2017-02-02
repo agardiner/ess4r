@@ -201,7 +201,7 @@ class Essbase
                 end
             end
             raise ArgumentError, "No column in grid matches #{names.join(', ')}.\n" +
-                "Available columns are: #{column_headers(:grid).join(', ')}"
+                "Available columns are: #{column_headers(:file).join(', ')}"
         end
 
 
