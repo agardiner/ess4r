@@ -13,4 +13,5 @@ GEMSPEC = Gem::Specification.new do |s|
     s.homepage = 'https://github.com/agardiner/ess4r'
     s.require_paths = ['lib']
     s.files = ['README.md', 'LICENSE'] + Dir['lib/**/*.rb']
+    s.has_rdoc = 'yard'
 end
