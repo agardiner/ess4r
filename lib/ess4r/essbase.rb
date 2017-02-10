@@ -16,6 +16,16 @@ class Essbase
 
     # Return a new Essbase API instance; one of these is needed for each
     # thread that will concurrently interact with Essbase.
+    #
+    # It's usually not necessary to call this method directly, since it is
+    # called automatically when you connect to an Essbase server (via
+    # Essbase.connect). You would therefore only need to call this method if you
+    # wished to call a JAPI method on IEssbase.
+    #
+    # @note This method registers an at_exit handler to disconnect automatically
+    #   when the Ruby program exits (if the instance is still signed-on).
+    #
+    # @return [IEssbase] A native Java class that implements IEssbase.
     def self.instance
         instance = IEssbase::Home.create(IEssbase.JAPI_VERSION)
         at_exit do
@@ -50,9 +60,12 @@ class Essbase
     #   services (APS) is lighter-weight, and more likely to be usable from
     #   client machines outside the data centre, since it uses the same server
     #   as SmartView.
+    #
+    # @return [Server] A Server instance representing a connection to the requested
+    #   Essbase server.
     def self.connect(user, password, server = 'localhost', aps_url = 'embedded')
-        # Load additional jar files required in embedded mode
         if aps_url =~ /^embedded$/i && !@jars_loaded
+            # Load additional jar files required in embedded mode
             load_jars 'ess_es_server.jar', 'ojdl.jar'
             @jars_loaded = true
 

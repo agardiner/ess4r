@@ -131,6 +131,7 @@ class Essbase
             end
 
 
+            # Whether this column is a key column when grouping to filter
             def filter_key?
                 @filter_key
             end
@@ -218,6 +219,7 @@ class Essbase
             end
 
 
+            # @return [String] the content definition for this column.
             def to_s
                 @content
             end

@@ -34,6 +34,7 @@ class Essbase
         #      are rejected records.
         #    @param abort_on_error [Boolean] Whether the load should be terminated
         #      on the first error, or continue until the end.
+        #
         #    @yield [msg, mbr, line] If a block is supplied, it will be called once
         #      for each rejected record.
         #    @yieldparam msg [String] The error message indicating the reason why
@@ -113,7 +114,7 @@ class Essbase
         end
 
 
-        # Processes the reject results from #load_data, #load_sql, or
+        # Processes the reject results from {#load_data}, #load_sql, or
         # #load_enumerable.
         #
         # @param rejects [Array<Array<String>>] An array of rejected records,
@@ -121,11 +122,13 @@ class Essbase
         #   +source_line+.
         # @param error_file [String] Optional path to a local file to receive
         #   the rejected records.
+        #
         # @yield If supplied, the block will be called for each rejection.
-        # @yield_param message [String] An error message indicating the reason
+        # @yieldparam message [String] An error message indicating the reason
         #   the record was rejected.
-        # @yield_param member [String] The member that led to the rejection.
-        # @yield_param source_line [String] The data record that was rejected.
+        # @yieldparam member [String] The member that led to the rejection.
+        # @yieldparam source_line [String] The data record that was rejected.
+        #
         # @return [Integer] A count of the number of rejected records. Note that
         #   this may be less than the total number of records actually rejected
         #   by the load if the number of rejections exceeds the DATAERRORLIMIT
@@ -191,6 +194,25 @@ class Essbase
 
         # Performs an incremental outline build for each pair of data file/rule
         # combinations in +arr_pairs+.
+        #
+        # @param arr_pairs [Array<Array<String>>] An Array of 2-item Arrays,
+        #   where the first item in inner arrays is the data file name, and the
+        #   second item in the inner array is the name of the dimension build
+        #   rule to use with that file.
+        # @param err_file [String] The name or path to a local file in which
+        #   errors should be recorded. The file will only be created if there
+        #   are rejected records.
+        # @param restruct_opt [:all_data, :no_data, :level0, :input] The cube
+        #   restructure option for data retention.
+        #
+        # @yield [msg, mbr, line] If a block is supplied, it will be called once
+        #   for each rejected record.
+        # @yieldparam msg [String] The error message indicating the reason why
+        #   the record was rejected.
+        # @yieldparam mbr [String] The name of the member that caused the problem.
+        # @yieldparam line [String] The line of input data that was rejected.
+        #
+        # @return [Integer] a count of the number of rejected records.
         def incremental_build(arr_pairs, err_file, restruct_opt = :all_data, &block)
             restruct_opt = case restruct_opt
             when :all_data then IEssCube.ESS_DOR_ALLDATA
@@ -232,16 +254,18 @@ class Essbase
         # Processes the reject results from #dimension_build or
         # #incremental_dimension_build
         #
-        # @param rejects [Array<StringBuffer>] An array of rejected record
+        # @param errors [Array<StringBuffer>] An array of rejected record
         #   errors, where each record consists of an error message or source
         #   record.
         # @param error_file [String] Optional path to a local file to receive
         #   the rejected records.
+        #
         # @yield If supplied, the block will be called for each rejection.
-        # @yield_param message [String] An error message indicating the reason
+        # @yieldparam message [String] An error message indicating the reason
         #   the record was rejected.
-        # @yield_param member [String] The member that led to the rejection.
-        # @yield_param source_line [String] The data record that was rejected.
+        # @yieldparam member [String] The member that led to the rejection.
+        # @yieldparam source_line [String] The data record that was rejected.
+        #
         # @return [Integer] A count of the number of rejected records. Note that
         #   this may be less than the total number of records actually rejected
         #   by the load if the number of rejections exceeds the DATAERRORLIMIT

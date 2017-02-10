@@ -1,9 +1,14 @@
 class Essbase
 
-    # Holds information about a single member. This class does not wrap the JAPI
-    # EssMember object, since we need to release the resources from the query
-    # used to obtain the members. Instead, we cache the information we need in
-    # instances of this class.
+    # Holds information about a single member. To obtain a Member instance, see
+    # the {Dimension} class, and especially {Dimension#[]}.
+    #
+    # @note This class does not wrap a JAPI EssMember object, since we obtain
+    #   member information via a member query, and need to release the resources
+    #   from this query as soon as possible. Instead, we cache the information
+    #   we need from an EssMember instance in properties on this class. If you
+    #   need to obtain an EssMember object, you can use #getMember on a {Cube}
+    #   instance.
     class Member
 
         # @return [Dimension] The Dimension object to which this member belongs.
@@ -19,11 +24,11 @@ class Essbase
         # @return [String] The consolidation operation to perform when aggregating
         #   this member.
         attr_reader :consolidation_type
-        # @return [Fixnum] The generation number of the member. Generations count
+        # @return [Integer] The generation number of the member. Generations count
         #   upwards from 1 as you descend the hierarchy from the dimension top
         #   member.
         attr_reader :generation_number
-        # @return [Fixnum] The level number of the member. Levels count upwards
+        # @return [Integer] The level number of the member. Levels count upwards
         #   from 0 starting from the leaf nodes and moving up the hierarchy.
         attr_reader :level_number
         # @return [String] The formula for this member in the outline.
@@ -32,18 +37,20 @@ class Essbase
         #   Nil if member is the root of the dimension.
         attr_reader :parent
         # @return [Member] The Member object that is the main (or non-shared)
-        #  instance of this shared member. Nil if this member is not shared.
+        #   instance of this shared member.
+        # @return [NilClass] nil if this member is not shared.
         attr_reader :non_shared_member
 
         alias_method :storage_type, :share_option
         alias_method :level, :level_number
         alias_method :generation, :generation_number
+        alias_method :primary_member, :non_shared_member
 
 
         # Creates a new Member object for the specified +dim+ from the IEssMember
         # +mbr+.
         #
-        # @private
+        # @!visibility private
         def initialize(dim, mbr, alias_tbls)
             @dimension = dim
             @name = mbr.name
@@ -62,32 +69,34 @@ class Essbase
         end
 
 
-        # Returns true if the member is a shared member.
+        # @return [Boolean] true if the member is a shared member.
         def shared?
             !!(share_option =~ /Shared/i)
         end
 
 
-        # Returns true if the member is non-shared, but has other shared
-        # instances of itself elsewhere in the dimension.
+        # @return [Boolean] true if the member is non-shared, but has other
+        #   shared instances of itself elsewhere in the dimension.
         def has_shared_members?
             @shared_members.size > 0
         end
 
 
-        # Returns true if the member is a dynamic calc member.
+        # @return [Boolean] true if the member is a dynamic calc member.
         def dynamic_calc?
             !!(share_option =~ /Dynamic calc/i)
         end
 
 
-        # Returns true if the member is an XREF member.
+        # @return [Boolean] true if the member is an XREF member. An XREF member
+        #   is a dynamic calc member that uses an @XREF function to retrieve
+        #   data from another cube.
         def xref?
             !!(dynamic_calc? && formula =~ /@XREF/i)
         end
 
 
-        # Returns true if the member is a leaf member.
+        # @return [Boolean] true if the member is a leaf member.
         def leaf?
             @level_number == 0
         end
@@ -103,19 +112,21 @@ class Essbase
         end
 
 
-        # Returns a hash containing the aliases for this member.
+        # @return [Hash<String, String>] a hash containing the aliases for this
+        #   member. The names of the alias tables are the keys to the hash, and
+        #   the member aliases are the values.
         def aliases
             @aliases.clone
         end
 
 
-        # Returns true if the member has the specified UDA.
+        # @return [Boolean] true if the member has the specified UDA.
         def has_uda?(uda)
             @udas.find{ |mbr_uda| mbr_uda.downcase == uda.downcase }
         end
 
 
-        # Returns the children of the member.
+        # Returns an array containing the children of this member.
         #
         # @return [Array<Member>] An array of the child members of this member.
         def children
@@ -123,19 +134,23 @@ class Essbase
         end
 
 
-        # Returns the other shared instances of this (non-shared) member.
+        # @return [Array<Member>] the other shared instances of this member.
         def shared_members
-            @shared_members.clone
+            if @non_shared_member
+                @non_shared_member.shared_members - self
+            else
+                @shared_members.clone
+            end
         end
 
 
-        # Returns the UDAs that this member has been assigned.
+        # @return [Array<String>] the UDAs that this member has been assigned.
         def udas
             @udas.clone
         end
 
 
-        # Returns the ancestors of this member.
+        # @return [Array<Member>] the ancestors of this member.
         def ancestors
             anc = iancestors
             anc.shift
@@ -143,7 +158,8 @@ class Essbase
         end
 
 
-        # Returns the ancestors of this member plus the member itself.
+        # @return [Array<Member>] the ancestors of this member plus the member
+        #   itself.
         def iancestors
             anc = [self]
             mbr = self
@@ -155,7 +171,9 @@ class Essbase
         end
 
 
-        # Returns all ancestors of all instances of this member.
+        # @return [Array<Member>] all ancestors of this member, i.e. the ancestors
+        #   of this member looking up all hierarchies, not just the hierarchy that
+        #   this instance of the member is present in.
         def rancestors
             anc = irancestors
             anc.shift
@@ -163,7 +181,8 @@ class Essbase
         end
 
 
-        # Returns all ancestors of all instances of this member plus the member.
+        # @return [Array<Member>] all ancestors of this member, as well as this
+        #   member.
         def irancestors
             anc = iancestors
             anc.clone.each do |ambr|
@@ -175,7 +194,7 @@ class Essbase
         end
 
 
-        # Returns all the members descended from this member.
+        # @return [Array<Member>] all the members descended from this member.
         def descendants
             desc = idescendants
             desc.shift
@@ -183,8 +202,8 @@ class Essbase
         end
 
 
-        # Returns all descendants of this member, including the descendants
-        # of other shared instances of this member.
+        # @return [Array<Member>] all descendants of this member, including the
+        #   descendants of other shared instances of this member.
         def rdescendants
             desc = irdescendants
             desc.shift
@@ -192,7 +211,8 @@ class Essbase
         end
 
 
-        # Returns all the descendants of this member plus the member itself.
+        # @return [Array<Member>] all descendants of this member, plus the
+        #   member itself.
         def idescendants
             desc = [self]
             @children.each do |child|
@@ -202,8 +222,8 @@ class Essbase
         end
 
 
-        # Returns all descendants of this member, including this member and
-        # the descendants of shared members that are descendants
+        # @return [Array<Member>] all descendants of this member, across all
+        #   hierarchies.
         def irdescendants
             me = @non_shared_member || self
             desc = [me]
@@ -215,15 +235,15 @@ class Essbase
         end
 
 
-        # Returns the level 0 descendants of this member.
+        # @return [Array<Member>] the level 0 descendants of this member.
         def leaves
             idescendants.select{ |mbr| mbr.leaf? }
         end
         alias_method :level0, :leaves
 
 
-        # Returns the level 0 descendants of this member and all other shared
-        # instances of this member.
+        # @return [Array<Member>] the level 0 descendants of this member and all
+        #    other shared instances of this member.
         def rleaves
             irdescendants.select{ |mbr| mbr.leaf? }
         end
@@ -233,6 +253,15 @@ class Essbase
         # Return members related to this member at the specified generation or
         # level. Like the @RELATIVE function, +gen_or_lvl+ denotes a level by a
         # negative or zero value, and a generation by positive values.
+        #
+        # @param gen_or_lvl [Integer] The generation or level number at which
+        #   to retrieve relatives of this member.
+        # @param follow_shared [Boolean] if true, all relatives of all instances
+        #   of this member at the specified level are returned. If false, only
+        #   relatives of this instance are returned.
+        #
+        # @return [Array<Member>] the set of related members at the specified
+        #   generation or level.
         def relative(gen_or_lvl, follow_shared = false)
             case
             when gen_or_lvl <= 0 && gen_or_lvl.abs <= @level_number
@@ -256,6 +285,24 @@ class Essbase
 
         # Performs a left-most depth-first traversal of the descendants of this
         # member.
+        #
+        # @param visitation_num [Integer] The current value of the visitation
+        #   number. This is incremented before and after recursing to traverse
+        #   each child. The visitation number is useful if you need to build
+        #   a nested sets model of the hierarchy for relational querying in
+        #   databases that don't support hierarchies efficiently.
+        # @see https://en.wikipedia.org/wiki/Nested_set_model Nested Sets Model
+        #
+        # @yield This method calls the provided block both before and after
+        #   traversing this member's children.
+        # @yieldparam mbr [Member] the current member being traversed
+        # @yieldparam pre_or_post [:pre, :post] A value of +:pre+ when the block
+        #   is called before traversing children, and +:post+ when the block is
+        #   called after traversing children.
+        # @yieldparam visitation_num [Integer] the current value of the
+        #   visitation number.
+        #
+        # @return [Integer] The new value for the visitation number.
         def traverse(visitation_num = 0, options = {}, &blk)
             if options.fetch(:pre_traversal, true)
                 blk.call(self, :pre, visitation_num += 1)
@@ -270,13 +317,13 @@ class Essbase
         end
 
 
-        # Returns the name of the member
+        # @return [String] the name of the member.
         def to_s
             @name
         end
 
 
-        # Return a string showing pertinent details of this member
+        # @return [String] a string showing pertinent details of this member.
         def inspect
             %Q{<Member @name="#{@name}" @dimension="#{@dimension}" @aliases=#{
                 @aliases.inspect} @children=#{@children.size} >}

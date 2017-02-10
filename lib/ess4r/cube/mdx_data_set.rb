@@ -3,7 +3,8 @@ require 'bigdecimal'
 
 class Essbase
 
-    # Represents the results of an MDX query.
+    # Represents the results of an MDX query. Returned by methods such as
+    # {CubeView#mdx_query} and {Cube#extract}.
     class MdxDataSet < Base
 
         # Determines whether to return rows that contain only zeros (or missing).
@@ -24,8 +25,7 @@ class Essbase
         #   column, row, or page, that column, row, or page is skipped (i.e. not
         #   output).
         #
-        #   @param mbrs [Array<String>] An array of member names that should be
-        #     suppressed.
+        #   @return [Array<String>] An array of member names that should be
         def suppress_members=(mbrs)
             @suppress_members = mbrs.map(&:upcase)
             @suppress_cols = Array.new(column_count)
@@ -38,9 +38,10 @@ class Essbase
         # @!attribute map_members
         #
         #   Gets/sets mappings for converting a source member name to a different
-        #   name on output.
+        #   name on output. Provides a way to convert an Essbase name to an
+        #   alternate value whenever the member appears in the result set.
         #
-        #   @param hsh [Hash<String, String>] A hash giving source -> target maps.
+        #   @return [Hash<String, String>] A hash giving source -> target maps.
         def map_members=(hsh)
             @map_members = Hash[hsh.map{ |k, v| [k.upcase, v] }]
         end
@@ -48,7 +49,7 @@ class Essbase
 
         # Creates a new MdxDataSet object.
         #
-        # @private
+        # @!visibility private
         def initialize(data_set)
             super("@data_set", data_set)
             axes = try{ @data_set.get_all_axes.to_a }
@@ -279,11 +280,20 @@ class Essbase
 
 
         # Yields each row of the data set to the supplied block as an array of
-        # field values. Each field yielded contains a value as would be seen in
-        # an Essbase retrieval, i.e. a grid with column and row headers. If the
-        # data set consists of multiple pages, and +include_page_headers+ is true,
-        # then the grid for each page will be preceded by a single row that
-        # contains an array of each page member.
+        # field values.
+        #
+        # If +include_headers+ is false, the rows yielded will not contain page or
+        # column headings.
+        #
+        # If the +header_style+ is +:grid+, each row yielded contains values as
+        # would be seen in an Essbase retrieval for the equivalent row, i.e.
+        # a grid with column and row headers. If the data set consists of
+        # multiple pages, then the grid for each page will be preceded by a
+        # single row that contains an array of each page member.
+        #
+        # If the +header_style+ is +:file+, a single header row at the start will be
+        # output. If there are more than one dimension on the column axis, then
+        # the members for a column will be combined, and separated by colons.
         #
         # @example Grid without Column Headers
         #   [Row 1a, Row 1b, 100, 100, 100]
@@ -304,15 +314,30 @@ class Essbase
         #   [Row 1a, Row 1b, 100, 100, 100]
         #   [Row 1a, Row 2b, 100, 100, 100]
         #
-        # @param include_col_headers [Boolean] A flag controlling whether column
+        # @example File with Single Column dimension
+        #   [RowDim1, RowDim2, Col A, Col B, Col C]
+        #   [Row 1a, Row 1b, 100, 100, 100]
+        #   [Row 1a, Row 2b, 100, 100, 100]
+        #
+        # @example File with Multiple Column dimensions
+        #   [RowDim1, RowDim2, Col A1:Col A2, Col B1:Col B2, Col C1:ColC2]
+        #   [Row 1a, Row 1b, 100, 100, 100]
+        #   [Row 1a, Row 2b, 100, 100, 100]
+        #
+        # @param include_headers [Boolean] A flag controlling whether column
         #   headers should be output/yielded.
-        # @param include_page_headers [Boolean] A flag controlling whether page
-        #   headers should be output/yielded. If true, at the start of each page,
-        #   an Array will be yielded containing the member(s) for the current page.
+        # @param header_style [:grid, :file] A symbol specifying the header
+        #   format to use. +:grid+ returns headers as per a SmartView retrieval,
+        #   whereas +:file+ places all column members ina single cell separated by
+        #   colons.
+        #
         # @yield [row] Each row of the data set will be yielded as an Array.
         # @yieldparam row [Array] An array containing the member names and data
         #   values for the current row. May also include blank cells if a column
         #   header row is being yielded.
+        #
+        # @return [Integer] A count of the number of records returned, excluding
+        #   column and page headers, i.e. the number of records of data returned.
         def each(include_headers = true, header_style = :grid)
             col_count = column_count
             cells_per_page = row_count * col_count
@@ -378,8 +403,8 @@ class Essbase
         # @option options [Boolean] :include_headers Whether or not to output
         #   headers at the top of the file. Defaults to true.
         # @option options [Boolean] :header_style The style of headers to output
-        #   if headers are included; :grid or :file (@see #column_headers).
-        #   Defaults to :file.
+        #   if headers are included; +:grid+ or +:file+ (@see #column_headers).
+        #   Defaults to +:file+.
         # @option options [Boolean] :quote_members Whether or not to enclose
         #   member names in quotes. Defaults to nil, which means member names are
         #   are only quoted if they contain the delimiter character(s).
@@ -389,6 +414,9 @@ class Essbase
         #   in. Defaults to 'w'.
         # @option options [Integer] :decimals the maximum number of decimal places
         #   of precision. If not specified, values are output at full precision.
+        #
+        # @return [Integer] A count of the number of data records output to the
+        #   file (i.e. excludes any header record(s)).
         def to_file(file_name, options = {})
             delimiter = options.fetch(:delimiter, "\t")
             include_headers = options.fetch(:include_headers, true)
@@ -401,8 +429,7 @@ class Essbase
 
             file = File.new(file_name, file_mode)
             begin
-                line_count = 0
-                self.each(include_headers, header_style) do |row|
+                line_count = self.each(include_headers, header_style) do |row|
                     row = row.map do |cell|
                         case cell
                         when String
@@ -415,7 +442,6 @@ class Essbase
                         end
                     end
                     file.puts row.join(delimiter)
-                    line_count += 1
                 end
             ensure
                 file.close

@@ -3,21 +3,30 @@ require_relative 'member'
 
 class Essbase
 
-    # Holds a set of Member objects representing the members in a dimension.
+    # Represents an Essbase dimension, and holds a set of {Member} objects
+    # representing the members in a dimension.
+    #
+    # To obtain a Dimension instance, use the {Cube#[] Cube#[]} method.
     class Dimension < Base
 
         include Enumerable
 
-        # The dimension name
+        # @return [String] the name of the dimension.
         attr_reader :name
-        # The storage type, e.g. Dense, Sparse
+        # @return [String] the storage type: Dense or Sparse.
         attr_reader :storage_type
-        # @return The dimension tag, e.g. Accounts, Time, Attribute, etc
+        # @return the dimension tag: Accounts, Time, Attribute, etc.
         attr_reader :tag
 
 
+        # @!visibility private
+        #
         # Creates a new Dimension object, populated from the supplied IEssDimension
         # object.
+        #
+        # @param cube [Cube] The cube to which this dimension belongs,
+        # @param ess_dim [IEssDimension] The JAPI IEssDimension object this class
+        #   is to wrap.
         def initialize(cube, ess_dim)
             super()
             @name = ess_dim.name
@@ -28,25 +37,27 @@ class Essbase
         end
 
 
-        # Returns true if this dimension is dense
+        # @return [Boolean] true if this dimension is dense, false if it is not.
         def dense?
             @storage_type == 'Dense'
         end
 
 
-        # Returns true if this dimension is sparse
+        # @return [Boolean] true if this dimension is sparse or an attribute
+        #   dimension.
         def sparse?
             @storage_type == 'Sparse' && !(@tag =~ /^Attr/)
         end
 
 
-        # Returns true if this dimension is an attribute dimension
+        # @return [Boolean] true if this dimension is an attribute dimension,
+        #   false otherwise.
         def attribute_dimension?
             @storage_type == 'Sparse' && (@tag =~ /^Attr/)
         end
 
 
-        # Returns true if this dimension is not an attribute dimension
+        # @return [Boolean] true unless this dimension is an attribute dimension.
         def non_attribute_dimension?
             !attribute_dimension?
         end
@@ -60,8 +71,16 @@ class Essbase
         end
 
 
-        # Returns a Member object containing details about the dimension member
+        # Returns a {Member} object containing details about the dimension member
         # +mbr_name+.
+        #
+        # @param mbr_name [String] A name or alias for the member to be returned.
+        #   An Essbase substitution variable can also be passed, in which case
+        #   the variable value is retrieved, and the corresponding {Member} object
+        #   returned.
+        #
+        # @return [Member] if the named member was found in this dimension.
+        # @return [NilClass] if no matching member can be found.
         def [](mbr_name)
             retrieve_members unless @members
             case mbr_name
@@ -94,30 +113,31 @@ class Essbase
         #
         # Relationship macros cause a member to be replaced by an expansion set
         # of members that have that relationship to the member. A macro is specified
-        # by the addition of a .<Relation> suffix, e.g. <Member>.Children.
-        # Additionally, the relationship in question may be further qualified by I
-        # and/or R modifiers, where I means include the member itself in the expansion
-        # set, and R means consider all hierarchies when expanding the member.
+        # by the addition of a +.<Relation>+ suffix, e.g. <Member>.Children.
+        # Additionally, the relationship in question may be further qualified by +I+
+        # and/or +R+ modifiers, where +I+ means include the member itself in the
+        # expansion set, and +R+ means consider all hierarchies when expanding the
+        # member.
         #
         # The following relationship macros are supported:
-        # - .Parent returns the member parent
-        # - .[I,R]Ancestors returns the member's ancestors
-        # - .[I]Children returns the member's children; supports the I modifier
-        # - .[I,R]Descendants returns the member's descendants
-        # - .[R]Leaves or .[R]Level0 returns the leaf/level 0 descendants of the member
-        # - .[R]Level<N> returns the related members at level N
-        # - .[R]Generation<N> returns the related members at generation N
-        # - .UDA(<uda>) returns descendants of the member that have the UDA <uda>
+        # - +.Parent+ returns the member parent
+        # - +.[I,R]Ancestors+ returns the member's ancestors
+        # - +.[I]Children+ returns the member's children; supports the I modifier
+        # - +.[I,R]Descendants+ returns the member's descendants
+        # - +.[R]Leaves+ or +.[R]Level0+ returns the leaf/level 0 descendants of
+        #   the member
+        # - +.[R]Level<N>+ returns the related members at level _N_
+        # - +.[R]Generation<N>+ returns the related members at generation _N_
+        # - +.UDA(<uda>)+ returns descendants of the member that have the UDA <uda>
         #
         # All of the above do not require querying of Essbase, and so are cheap
         # to evaluate. Alternatively, Essbase calc functions can be used to express
         # more complicated relationships, such as compound relationships.
         #
-        # @param mbr_spec [Array, String] A string or array of strings containing
+        # @param mbr_spec [Array|String] A string or array of strings containing
         #   member names, optionally followed by an expansion macro, such as
         #   .Children, .Leaves, .Descendants, etc
         # @return [Array<Member>] An array of Member objects representing the
-        #   members that satisfy +mbr_spec+.
         def expand_members(mbr_spec, options={})
             retrieve_members unless @members
             mbr_spec = [mbr_spec].flatten
@@ -182,8 +202,16 @@ class Essbase
         # Performs a traversal of the dimension hierarchy, yielding each Member
         # in the dimension to the supplied block.
         #
-        # Note: By default, this iteration of members excludes shared members,
+        # @note By default, this iteration of members excludes shared members,
         # but if these are desired, specify true in the :include_shared option.
+        #
+        # @param opts [Hash] An options hash.
+        # @option opts [Boolean] :include_shared If true, includes shared members
+        #   when iterating over the dimension. If false (the default), shared
+        #   members are not yielded.
+        #
+        # @yield Yields a {Member} object for each member in the dimension.
+        # @yieldparam mbr [Member] The current member in the iteration.
         def each(opts = {})
             retrieve_members unless @members
             include_shared = opts.fetch(:include_shared, false)

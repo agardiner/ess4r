@@ -19,24 +19,29 @@ class Essbase
 
 
     # Base class for all Essbase JAPI wrapper objects; provides logging and
-    # instrumentsion support, and a #try method for wrapping interactions via
+    # instrumentsion support, and a {#try} method for wrapping interactions via
     # the Java API, so that failures return a Ruby exception instead of a Java
     # one.
     #
-    # The wrapper uses #method_missing to delegate to the underlying Java method
+    # The wrapper uses {#method_missing} to delegate to the underlying Java method
     # (using normal JRuby to Java name conversion) if no Ruby implementation is
     # provided for a method.
     #
-    # Logging support is provided by a #log property, which returns a Logger
+    # Logging support is provided by a {#log} property, which returns a Logger
     # from the java.util.logging framework.
     #
-    # Finally, an #instrument method is provided for capturing instrumentation
+    # Finally, an {#instrument} method is provided for capturing instrumentation
     # about Essbase method calls. This is a no-op unless ActiveSupport
     # notifications are available.
     class Base
 
         include_package 'com.essbase.api.base'
 
+        # Provides access to a java.util.logging.Logger instance under the ess4r
+        # namespace. This logger can be used to log activity on the same log
+        # handlers used by the Essbase message hanlder callback.
+        # @return [java.util.logging.Logger] A logger named for the sub-class,
+        #   e.g. ess4r.server, ess4r.cube, etc.
         attr_reader :log
 
 
@@ -63,8 +68,8 @@ class Essbase
         end
 
 
-        # When making an Essbase API call, converts an EssException to a
-        # Ruby exception.
+        # Attempts to make an Essbase API call, and converts any JAPI EssException
+        # Java exceptions to Ruby {EssbaseError} exceptions.
         def try
             begin
                 yield
@@ -74,7 +79,21 @@ class Essbase
         end
 
 
-        # Instrument an Essbase operation
+        # Instrument an Essbase operation, using ActiveSupport::Notifications
+        # (if available). Calls to methods that might take some time to complete
+        # can utilise this method to track start/end times, as well as various
+        # other items of interest about the method call. Interested parties can
+        # register to receive notifications of these calls via the
+        # ActiveSupport#Notifications framework from Rails. If ActiveSupport is
+        # not available and +require+d, this becomes a no-op (although the
+        # instrumented call still takes place).
+        #
+        # @param operation [String] A name for the operation being performed.
+        #   This is placed under the ess4r namespace, using the standard naming
+        #   for ActiveSupport::Notifications, i.e. <operation>.ess4r.
+        # @param payload [Hash] An optional payload to send along with the
+        #   notification. Can contain additional parameters of interest.
+        # @yield A block containing the action(s) to be instrumented.
         def instrument(operation, payload = {}, &blk)
             if @instrument
                 @instrument.instrument("#{operation}.ess4r", payload, &blk)

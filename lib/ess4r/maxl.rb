@@ -3,7 +3,7 @@ require_relative 'maxl/maxl_result_set'
 
 class Essbase
 
-    # Represents a MaxL session
+    # Represents a MaxL session; see {Server#open_maxl_session}.
     class Maxl < Base
 
         # A count of the number of records in any result set from the last query
@@ -16,7 +16,7 @@ class Essbase
         # Note: This method should not be invoked directly; see instead
         # Server#open_maxl.
         #
-        # @private
+        # @!visibility private
         def initialize(maxl_session, message_handler)
             super("@maxl", maxl_session)
             @message_handler = message_handler
@@ -33,12 +33,15 @@ class Essbase
 
         # Executes the specified Maxl +stmt+.
         #
-        # Note: this seems not to work for data loads or dimension builds that
-        # reference local files or rules objects.
+        # @note This seems not to work for data loads or dimension builds that
+        #   reference local files or rules objects.
         #
-        # @return [MaxlResultSet, NilClass] If the command is one that returns a
-        #   grid, then a MaxlResultSet object is returned from which the contents
-        #   can be obtained. Otherwise, nil is returned.
+        # @param stmt [String] A MaxL statement to be performed.
+        #
+        # @return [MaxlResultSet] if the command is one that returns a grid,
+        #   then a MaxlResultSet object is returned from which the contents can
+        #   be obtained.
+        # @return [NilClass] nil if the command is a directive rather than a query.
         def execute(stmt)
             orig_stmt = stmt
             stmt = stmt.sub(/;\s*$/, '').gsub(/\n/, ' ').gsub(/\s{2,}/, ' ').strip
@@ -57,8 +60,8 @@ class Essbase
         end
 
 
-        # Returns a ResultSet object representing the result set from the last
-        # Maxl command.
+        # @return [MaxlResultSet] an object representing the result set from the last
+        #   Maxl command.
         def result_set
             MaxlResultSet.new(@maxl.result_set)
         end

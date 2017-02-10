@@ -117,29 +117,37 @@ class Essbase
         end
 
 
+        # @return [Boolean] true if sorting of data is required before output
         def sort_required?
             @sort_required
         end
 
 
+        # @returnb [Boolean] true if data should be filtered before output
         def filter_required?
             @filter_required
         end
 
 
-        # Returns the names of the columns in the sheet
+        # @return [Array<String>] the names of the columns in the report.
         def column_headers
             @columns.map(&:header)
         end
 
 
-        # Returns the content specification for each column in the sheet
+        # @return [Array<String>] the content specification for each column in
+        #   the report.
         def column_content
             @columns.map{ |col| [col.content].flatten.join(' / ') }
         end
 
 
         # Populate data for the report via the associated Extract.
+        #
+        # @param options [Hash] An options hash.
+        # @option options [String] :response_file The name of the file to hold
+        #  the raw data
+        # @return [Array<Array>] An array of rows of data.
         def populate(options = {})
             opts = options.merge(
                 suppress_missing: @suppress_missing,
@@ -164,16 +172,22 @@ class Essbase
         end
 
 
+        # @return [Integer] the number of rows in the report.
         def row_count
             @data && @data.length
         end
 
 
+        # Clears any data loaded to the report.
         def clear
             @data = nil
         end
 
 
+        # Saves the report to the specified +path+.
+        #
+        # @param path [String] the path to the file where the report output
+        #   should be saved.
         def save(path)
             CSV.open(path, "w") do |csv|
                 csv << column_headers
@@ -185,6 +199,10 @@ class Essbase
         end
 
 
+        # Loads data from the specified +path+.
+        #
+        # @param path [String] the path to the file from where the report data
+        #   should be loaded.
         def load(path)
             if File.exists?(path)
                 @data = CSV.read(path)
@@ -197,6 +215,8 @@ class Essbase
         end
 
 
+        # @return [Array<MissingMap> an array containing details of all members
+        #   in the extract data that did not have a valid mapping specification.
         def missing_maps
             mm = @columns.map{ |ci| ci.missing_maps.values }.flatten.sort
             mm.each{ |m| m.report = self.name }
@@ -204,6 +224,7 @@ class Essbase
         end
 
 
+        # @return [String] the name of the report
         def to_s
             @name
         end

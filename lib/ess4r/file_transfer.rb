@@ -67,42 +67,47 @@ class Essbase
             end
 
 
+            # Creates a FileObject
+            #
+            # @!visibility private
             def initialize(file_obj)
                 super('@file', file_obj)
             end
 
 
-            # Return the time at which the file was last modified.
+            # @return [Time] the time at which the file was last modified.
             def time_modified
                 Time.at(@file.time_modified.to_a[0])
             end
 
 
-            # Return the time at which the file was locked, or nil if it is not
-            # locked.
+            # @return [Time] the time at which the file was locked, or nil if it
+            #   is not locked.
             def time_stamp
                 ts = @file.getTimeStamp
                 Time.at(ts) if ts > 0
             end
 
 
-            # Returns the name and extension for the file object.
+            # @return [String] the name and extension for the file object.
             def file_name
                 "#{@file.name}#{self.class.extension_for(@file.type)}"
             end
 
 
-            # Returns the size of the file.
+            # @return [Integer] the size of the file.
             def size
                 @file.getFileSizeLong() rescue @file.getFileSize()
             end
 
 
+            # @return [String] The file name.
             def to_s
                 self.file_name
             end
 
 
+            # @return [String] details about the file.
             def inspect
                 "%-12s  %s  %dKB" % [
                     self.file_name,

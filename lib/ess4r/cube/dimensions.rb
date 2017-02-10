@@ -1,5 +1,8 @@
 class Essbase
 
+    # Defines methods for obtaining {Dimension} objects from a {Cube}.
+    # This module is used to extend {Cube} with methods for working with
+    # dimensions.
     module Dimensions
 
         # Returns a an Array of Dimension objects, representing the available
@@ -44,6 +47,10 @@ class Essbase
         # Returns a Dimension object containing the members of the +dim_name+
         # dimension. The Dimension object is cached for re-use, and Member
         # objects include useful methods for navigating through a hierarchy.
+        #
+        # @param dim_name [String] The name of the dimension to return.
+        # @return [Dimension] A {Dimension} object representing the requested
+        #   dimension.
         def [](dim_name)
             retrieve_dimensions unless @dimensions
             dim = @dimensions[dim_name.to_s.upcase]
@@ -57,15 +64,15 @@ class Essbase
         # efficient means of extracting data when the order of records is not
         # important.
         #
-        # @return [Array] A list of dimension names in the order they will
+        # @return [Array<Dimension>] A list of dimensions in the order they will
         #   appear in a database export.
         def get_data_export_dimension_order
             sparse_dimensions + dense_dimensions
         end
 
 
-
-        # Retrieve the available dimensions from the cube.
+        # Retrieve (or refresh) the available dimensions from the cube. Causes
+        # the cube to be (re-)queried for metadata about available dimensions.
         def retrieve_dimensions
             require_relative 'dimension'
             @dimensions = {}

@@ -17,10 +17,17 @@ class Essbase
 
         # Create a connection to an Essbase server.
         #
-        # Note: This method should not be called directly - instead, instantiate
-        # a server connection via Essbase.connect.
+        # @param user [String] The user id to connect with.
+        # @param password [String] The user password.
+        # @param server [String] The server network name or IP address. If
+        #   Essbase is not running on the default port, specify a port using
+        #   the form <server>:<port>.
+        # @param aps_url [String] The URL of the APS server to connect through.
+        #   Pass +embedded+ as the URL to use the embedded client and connect
+        #   directly to the Essbase server.
         #
-        # @private
+        # @note This method should not be called directly - instead, instantiate
+        #   a server connection via {Essbase.connect}.
         def initialize(user, password, server, aps_url)
             super("@server")
 
@@ -33,18 +40,24 @@ class Essbase
         end
 
 
+        # Closes the connection to the Essbase server. Attempts to call server
+        # methods after this method has been called will result in an exception.
         def disconnect
             try{ @server.disconnect }
             @server = nil
         end
 
 
-        # Open the specified application, and return an Application object for
-        # interacting with it.
+        # Open the specified Essbase application, and return an Application
+        # instance for interacting with it.
         #
         # @param ess_app [String] Essbase application name.
+        # @yield If a block is supplied, the opened Application object is yielded
+        #   to the block, and then closed when the block returns.
+        # @yieldparam cube [Application] The Application object representing the
+        #   Essbase application.
         # @return [Application] An Application object for interacting with the
-        #   specified application.
+        #   specified Essbase application.
         def open_app(ess_app)
             require_relative 'application'
 
@@ -52,6 +65,14 @@ class Essbase
             app = nil
             instrument "open_app", app: ess_app do
                 app = Application.new(try{ @server.get_application(ess_app) })
+            end
+            if block_given?
+                begin
+                    yield app
+                    nil
+                end
+            else
+                app
             end
         end
 

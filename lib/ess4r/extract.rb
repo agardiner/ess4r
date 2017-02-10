@@ -83,9 +83,7 @@ class Essbase
         # greatly slows down the extract process, we check and warn if sparse
         # dynamic calc members are found in the extract spec.
         #
-        # @param extract_spec [Hash] A Hash containing specifications for the
-        #   member(s) to be extracted for each dimension.
-        # @param options [Hash] An options hash:
+        # @param options [Hash] An options hash.
         # @option options [Symbol] :default_missing_dims Determines what to do
         #   for non-attribute dimensions in the cube where no member specification
         #   has been supplied. Possible values are:
@@ -102,6 +100,7 @@ class Essbase
         #   when an expansion macro expands to these members, but you don't need
         #   them in the extract. Default is false - sparse dynamic members will
         #   be excluded.
+        #
         # @return [Hash] An expanded extract specification, with all dimensions
         #   specified, and all expansion macros replaced with the matching
         #   members.

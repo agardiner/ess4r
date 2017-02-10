@@ -3,7 +3,9 @@
 
 class Essbase
 
-    # To retrieve the log file, we need access to the m_olapCxt
+    # @!visibility private
+    # To retreive the log file, we need access to the private m_olapCxt on
+    # EssOlapApplication.
     class Java::ComEssbaseApiDatasource::EssOlapApplication
 
         field_reader :m_olapCxt
@@ -11,18 +13,29 @@ class Essbase
     end
 
 
+    # Wraps an IEssOlapApplication implementing class returned from {Server#open_app}.
     class Application < Base
 
+        # @!visibility private
+        #
+        # Create an instance of this class, wrapping the supplied IEssOlapApplication
+        # instance.
+        #
+        # @see Server#open_app
+        #
+        # @param app [IEssOlapApplication] The JAPI application object to wrap.
         def initialize(app)
             super('@app', app)
         end
 
 
-        # Retrieves the application log file, optionally from the specified date.
+        # Download the application log file from the server.
         #
-        # @param local_file [String] The path to the local file to save the log to
-        # @param start_time [Date, Time, DateTime] The earliest time from which to
-        #    return log entries; if omitted, the entire log file is returned.
+        # @param local_file [String] The path to the local file into which the
+        #   server application log should be written.
+        # @param start_time [Date, Time, DateTime, Fixnum, NilClass] A start time
+        #   from which log records should be retrieved. Supports all Ruby date/time
+        #   types, as well as a Fixnum, which is assumed to be seconds since 1/1/70.
         def get_log_file(local_file, start_time = nil)
             case start_time
             when Date, DateTime

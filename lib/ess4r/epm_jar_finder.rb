@@ -1,12 +1,17 @@
 require 'java'
 
 
-# Defines helper methods for locating the necessary Essbase JAPI jar files.
+# This is intended to make it easier to use the Essbase JAPI, since configuring
+# the necessary classpath and environment settings can be tricky and is poorly
+# documented.
 module EPMJarFinder
 
+    # Represents a classpath or environment configuration error that prevents
+    # initialisation of the Essbase JAPI.
     class ConfigurationError < StandardError; end
 
 
+    # Standard locations in an EPM install for various needed JAR files.
     STANDARD_JAR_LOCATIONS = {
         'ess_japi.jar' => 'common/EssbaseJavaAPI',
         'ess_es_server.jar' => 'common/EssbaseJavaAPI',
@@ -14,6 +19,8 @@ module EPMJarFinder
     }
 
 
+    # @return [Logger] a java.util.logging.Logger object for logging the
+    #   initialisation process.
     def log
         @log = Java::JavaUtilLogging::Logger.getLogger("ess4r.essbase")
     end
@@ -24,6 +31,8 @@ module EPMJarFinder
     # a library user to control where the JARs should be loaded from by setting
     # the classpath or JRuby load path. Only if that fails do we fallback to
     # attempting to locate the JARs on our own.
+    #
+    # @param jars [String] The name(s) of JARs to be loaded.
     def load_jars(*jars)
         jars.each do |jar|
             unless $LOADED_FEATURES.find{ |f| f =~ Regexp.new(jar) }
@@ -43,6 +52,9 @@ module EPMJarFinder
 
 
     # Find the specified jar using EPM_ORACLE_HOME as a starting point.
+    #
+    # @param jar [String] The name of the JAR file to attempt to add to the
+    #   class path.
     def find_jar(jar)
         oh = java.lang.System.getProperty('EPM_ORACLE_HOME') || ENV['EPM_ORACLE_HOME']
         unless oh

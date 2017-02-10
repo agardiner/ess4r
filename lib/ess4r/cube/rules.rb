@@ -13,10 +13,10 @@ class Essbase
         #   saved.
         # @param fields [Array<String>] An array specifying the field names in
         #   the data file.
-        # @param [Hash] An options hash.
-        # @options opts [Symbol] :delimiter The field delimiter used in the data
+        # @param opts [Hash] An options hash.
+        # @option opts [Symbol] :delimiter The field delimiter used in the data
         #   file. One of :tab, :comma, or :space.
-        # @options opts [Boolean] :use_header_for_field_names If true, the load
+        # @option opts [Boolean] :use_header_for_field_names If true, the load
         #   rule will be configured to use the header record from the data file
         #   to set the columns when loading data.
         def create_data_load_rule(file_name, fields, opts = {})

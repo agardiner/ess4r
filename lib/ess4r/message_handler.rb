@@ -17,13 +17,19 @@ class Essbase
 
         include com.essbase.api.session.IEssCustomMessageHandler
 
-
         # Essbase message level constants
+
+        # Value indicating a debug level message
         MSG_LVL_DEBUG = 1
+        # Value indicating an information level message
         MSG_LVL_INFO = 2
+        # Value indicating a warning level message
         MSG_LVL_WARN = 3
+        # Value indicating an error level message
         MSG_LVL_ERROR = 4
+        # Value indicating a fatal level message
         MSG_LVL_FATAL = 5
+
 
         # We don't echo every Essbase message, since some are just noise and
         # don't tell us anything useful. Messages with the following numbers
@@ -63,9 +69,9 @@ class Essbase
         end
 
 
+        java_signature 'int(int, int, string)'
         # Callback that will be called by Essbase for each message written to
         # the server or application log.
-        java_signature 'int(int, int, string)'
         def process_message(msg_num, msg_lvl, msg_txt)
             unless @suppress_message_nums.include?(msg_num)
                 msg_parts = []
