@@ -130,7 +130,13 @@ class Essbase
 
 
         # Handle any sparse dynamic calc substitutions for MDX calcs, plus any
-        # additional MDX calculations
+        # additional MDX calculations.
+        #
+        # @param options [Hash] An options hash.
+        # @option options [Boolean] :diable_mdx_calcs If true, turns off the use
+        #   of any MDX calculations that have been created as alternatives to
+        #   sparse dynamic calc members.
+        # @option options [
         def mdx_setup_calcs(options)
             @suppress_members = []
             @member_name_maps = {}
@@ -184,6 +190,15 @@ class Essbase
 
         # Create an MDX query consisting of a series of CrossJoin's to combine the
         # members we want from each dimension on each axis.
+        #
+        # @param partition_dim [String|NilClass] An optional dimension by which
+        #   the query will be partitioned.
+        # @param options [Hash] An options hash
+        # @option options [Boolean] :suppress_missing Whether missing rows should
+        #   be suppressed (true) or included in the output (false).
+        # @option options [Boolean] :include_sparse_dynamic_calcs Whether sparse
+        #   dynamic calcs should be included. The presence of a sparse dynamic calc
+        #   prevents the use of the NONEMPTYBLOCK optimisation.
         def generate_query(partition_dim, options)
             assign_axes(options)
 
@@ -203,6 +218,7 @@ class Essbase
             end.flatten
             mbr_sets = (@page_dims + @row_dims + @col_dims).map do |dim|
                 if dim == partition_dim
+                    # Dimension name will be replaced later by current set of members in partition
                     "  SET [#{dim}Set] AS '{%{#{dim}}}'"
                 else
                     "  SET [#{dim}Set] AS '{#{@extract_members[dim].join(', ')}}'"

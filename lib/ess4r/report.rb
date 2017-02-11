@@ -277,7 +277,7 @@ class Essbase
 
 
         # Keeps only the first @filter_count records, based on unique combinations
-        # of filter_key columns.
+        # of columns that are tagged as filter (i.e. group by) columns.
         def filter_data
             filter_cols = @columns.select{ |col| col.filter_key? }
             if filter_cols.length > 0

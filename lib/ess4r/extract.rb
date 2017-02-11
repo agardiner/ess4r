@@ -70,7 +70,7 @@ class Essbase
         #
         # This function is designed to generate member lists in the appropriate
         # format for each extract type (e.g. "mbr" for REP or CSC extracts vs
-        # [mbr] for MDX extracts), and delegates to a subclass quote_mbrs method
+        # [mbr] for MDX extracts), and delegates to a subclass #quote_mbrs method
         # to handle the quoting appropriate for the extract method. As such,
         # member specifications can (and should) be given in extract agnostic
         # format as an array of unquoted names, and use the expansion macros
@@ -186,6 +186,9 @@ class Essbase
 
 
         # Quotes a list of member names for a query specification.
+        #
+        # @param [Array<String|Member>] An array of members to be quoted.
+        # @return [Array<String>] An array of member names enclosed in quotes.
         def quote_mbrs(mbrs)
             mbrs.map{ |mbr| quote_mbr(mbr) }
         end
@@ -193,6 +196,10 @@ class Essbase
 
         # A default implementation for quoting members, which simply surrounds
         # individual member names with double-quotes.
+        #
+        # @param mbr [String|Member] A single member to be quoted. This default
+        #  implementation surrounds the member name in double-quotes.
+        # @ return [String] the member name surrounded by double-quotes.
         def quote_mbr(mbr)
             %{"#{mbr}"}
         end
