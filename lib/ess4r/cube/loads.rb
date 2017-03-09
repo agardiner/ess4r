@@ -152,7 +152,7 @@ class Essbase
                     err_file.close if err_file
                 end
             end
-            log.warn "There were #{reject_count} rejected records" if reject_count > 0
+            log.warning "There were #{reject_count} rejected records" if reject_count > 0
             reject_count
         end
 
@@ -299,7 +299,7 @@ class Essbase
                     err_file.close if err_file
                 end
             end
-            log.warn "There were #{error_count} build errors" if error_count > 0
+            log.warning "There were #{error_count} build errors" if error_count > 0
             error_count
         end
 

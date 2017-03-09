@@ -208,7 +208,7 @@ class Essbase
                 @data = CSV.read(path)
                 @data.shift(1)
             else
-                log.warn "No data file found at #{path}"
+                log.warning "No data file found at #{path}"
                 @data = []
             end
             @data
