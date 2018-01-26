@@ -228,8 +228,9 @@ class Essbase
 
             # Determine what suppression options to use
             non_empty = options.fetch(:suppress_missing, true)
-            non_empty_blocks = non_empty && (!options.fetch(:include_sparse_dynamic_calcs, false) ||
-                                             @sparse_dynamic_calcs.size == 0)
+            non_empty_blocks = non_empty && @cube.cube_type.to_s == 'Normal' &&
+                                    (!options.fetch(:include_sparse_dynamic_calcs, false) ||
+                                     @sparse_dynamic_calcs.size == 0)
             non_empty_spec = "#{non_empty_blocks ? 'NONEMPTYBLOCK ' : ''}#{non_empty ? 'NON EMPTY ' : ''}"
 
             mdx = <<-EOQ.gsub(/^ {16}/, '')
