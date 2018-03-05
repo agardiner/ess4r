@@ -141,30 +141,40 @@ class Essbase
         def expand_members(mbr_spec, options={})
             retrieve_members unless @members
             mbr_spec = [mbr_spec].flatten
-            mbrs = []
+            all_mbrs = []
             mbr_spec.each do |spec|
+                spec.strip!
+                case spec[0]
+                when '-'
+                    op = :remove
+                    spec = spec[1..-1].strip
+                when '+'
+                    op = :add
+                    spec = spec[1..-1].strip
+                else
+                    op = :add
+                end
                 case spec
                 when /^['"\[]?(.+?)['"\]]?\.(Parent|I?Children|I?R?Descendants|I?R?Ancestors|R?Level0|R?Leaves)$/i
                     # Memer name with expansion macro
                     mbr = self[$1]
                     raise ArgumentError, "Unrecognised #{self.name} member '#{$1}' in #{spec}" unless mbr
                     rels = mbr.send($2.downcase.intern)
-                    mbrs.concat(rels.is_a?(Array) ? rels : [rels])
+                    mbrs = rels.is_a?(Array) ? rels : [rels]
                 when /^['"\[]?(.+?)['"\]]?\.(R)?(Level|Generation|Relative)\(?(\d+)\)?$/i
                     # Memer name with level/generation expansion macro
                     mbr = self[$1]
                     sign = $3.downcase == 'level' ? -1 : 1
                     raise ArgumentError, "Unrecognised #{self.name} member '#{$1}' in #{spec}" unless mbr
-                    rels = mbr.relative($4.to_i * sign, !!$2)
-                    mbrs.concat(rels)
+                    mbrs = mbr.relative($4.to_i * sign, !!$2)
                 when /^['"\[]?(.+?)['"\]]?\.UDA\(['"]?(.+?)['"]?\)$/i
                     # Memer name with UDA expansion macro
                     mbr = self[$1]
                     raise ArgumentError, "Unrecognised #{self.name} member '#{$1}' in #{spec}" unless mbr
-                    rels = mbr.idescendants.select{ |mbr| mbr.has_uda?($2) }
-                    mbrs.concat(rels)
+                    mbrs = mbr.idescendants.select{ |mbr| mbr.has_uda?($2) }
                 when /[@:,]/
                     # An Essbase calc function or range - execute query and use results to find Member objects
+                    mbrs = []
                     mbr_sel = try{ @cube.open_member_selection("MemberQuery") }
                     begin
                         mbr_sel.execute_query(<<-EOQ.strip, spec)
@@ -187,15 +197,20 @@ class Essbase
                     # Plain member name
                     mbr = self[$1]
                     raise ArgumentError, "Unrecognised #{self.name} member '#{$1}'" unless mbr
-                    mbrs << mbr
+                    mbrs = [mbr]
                 else
                     raise ArgumentError, "Unrecognised #{self.name} member '#{spec}'"
                 end
+                if op == :add
+                    all_mbrs.concat(mbrs)
+                else
+                    all_mbrs -= mbrs
+                end
             end
-            if mbrs.size == 0 && options.fetch(:raise_if_empty, true)
+            if all_mbrs.size == 0 && options.fetch(:raise_if_empty, true)
                 raise ArgumentError, "Member specification #{mbr_spec} for #{self.name} returned no members"
             end
-            mbrs
+            all_mbrs
         end
 
 

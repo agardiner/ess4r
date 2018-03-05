@@ -42,6 +42,7 @@ class Essbase
         attr_reader :non_shared_member
 
         alias_method :storage_type, :share_option
+        alias_method :aggregation, :consolidation_type
         alias_method :level, :level_number
         alias_method :generation, :generation_number
         alias_method :primary_member, :non_shared_member
@@ -137,7 +138,7 @@ class Essbase
         # @return [Array<Member>] the other shared instances of this member.
         def shared_members
             if @non_shared_member
-                @non_shared_member.shared_members - self
+                @non_shared_member.shared_members.reject{ |m| m == self }
             else
                 @shared_members.clone
             end
@@ -168,6 +169,13 @@ class Essbase
                 mbr = par
             end
             anc
+        end
+
+
+        # @return [Array<Member>] the path from the top of the dimension to this
+        #   member.
+        def path
+            iancestors.reverse
         end
 
 
