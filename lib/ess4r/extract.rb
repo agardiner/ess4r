@@ -347,3 +347,4 @@ end
 require_relative 'extract/mdx_extract'
 require_relative 'extract/report_extract'
 require_relative 'extract/calc_extract'
+require_relative 'extract/grid_extract'

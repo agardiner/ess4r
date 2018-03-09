@@ -37,6 +37,8 @@ class Essbase
         #   recent versions of Essbase.
         # @option options [Boolean] :aliases If true, aliases from the current
         #   alias table are returned instead of names.
+        # @option options [String] :alias_table The name of the alias table to
+        #   use.
         # @return [DataSet] An MDX data set object that contains the returned
         #   data.
         def mdx_query(mdx_stmt, options = {})
@@ -59,6 +61,49 @@ class Essbase
                 try{ @cube_view.performOperation(op) }
             end
             MdxDataSet.new(try{ @cube_view.getMdDataSet })
+        end
+
+
+        # Executes a grid retrieve against the Essbase database to which this
+        # cube view is connected. The grid must already have been defined before
+        # calling this method.
+        #
+        # @param options [Hash] An options hash.
+        # @option options [Boolean] :aliases If true, aliases from the active
+        #   alias table are returned instead of names. Note that if a given
+        #   member does not have an alias in the active alias table, the member
+        #   name will be returned instead.
+        # @option options [String] :alias_table The name of the alias table to
+        #   use.
+        # @option options [Boolean] :suppress_missing If true, suppresses missing
+        #   records from the retrieve.
+        # @option options [Boolean] :suppress_zero If true, suppresses zero
+        #   records from the retrieve.
+        def retrieve(options = {})
+            if options[:aliases]
+                try{ @cube_view.setAliasNames(true) }
+                if options[:alias_table] && options[:alias_table] != try{ @cube_view.getAliasTable() }
+                    try{ @cube_view.setAliasTable(options[:alias_table])
+                end
+            else
+                try{ @cube_view.setAliasNames(false) }
+            end
+            indent = case options.fetch(:indent_style, :none)
+                     when :totals the IEssCubeView::EEssIndentStyle::TOTALS
+                     when :sub_items the IEssCubeView::EEssIndentStyle::SUB_ITEMS
+                     else IEssCubeView::EEssIndentSyle::NONE
+                     end
+            try {
+                @cube_view.setSuppressMissing(options.fetch(:suppress_missing, false))
+                @cube_view.setSuppressMissing(options.fetch(:suppress_zero, false))
+                @cube_view.setFormulas(options.fetch(:preserve_formulas, true))
+                @cube_view.setIndentStyle(indent)
+            }
+            try { @cube_view.updatePropertyValues() }
+            op = try{ @cube_view.createIEssOpRetrieve() }
+            instrument "retrieve" do
+                try{ @cube_view.performOperation(op) }
+            end
         end
 
 

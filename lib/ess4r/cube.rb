@@ -144,6 +144,8 @@ class Essbase
                 Essbase::CalcExtract.new(self, extract_spec, options)
             when :mdx
                 Essbase::MdxExtract.new(self, extract_spec, options)
+            when :grid
+                Essbase::GridExtract.new(self, extract_spec, options)
             else
                 raise ArgumentError, "Unrecognised extract_method: #{options[:extract_method]}"
             end
