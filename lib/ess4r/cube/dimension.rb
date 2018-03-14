@@ -155,11 +155,13 @@ class Essbase
                     op = :add
                 end
                 case spec
-                when /^['"\[]?(.+?)['"\]]?\.(Parent|I?Children|I?R?Descendants|I?R?Ancestors|R?Level0|R?Leaves)$/i
+                when /^['"\[]?(.+?)['"\]]?\.(Parent|I?Children|I?R?Descendants|I?R?Ancestors|R?Level0|R?Leaves|I?Shared)$/i
                     # Memer name with expansion macro
                     mbr = self[$1]
                     raise ArgumentError, "Unrecognised #{self.name} member '#{$1}' in #{spec}" unless mbr
-                    rels = mbr.send($2.downcase.intern)
+                    mthd = $2.downcase
+                    mthd += '_members' if mthd =~ /shared$/
+                    rels = mbr.send(mthd.intern)
                     mbrs = rels.is_a?(Array) ? rels : [rels]
                 when /^['"\[]?(.+?)['"\]]?\.(R)?(Level|Generation|Relative)\(?(\d+)\)?$/i
                     # Memer name with level/generation expansion macro

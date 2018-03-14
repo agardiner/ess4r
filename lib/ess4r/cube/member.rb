@@ -42,6 +42,7 @@ class Essbase
         attr_reader :non_shared_member
 
         alias_method :storage_type, :share_option
+        alias_method :data_storage, :share_option
         alias_method :aggregation, :consolidation_type
         alias_method :level, :level_number
         alias_method :generation, :generation_number
@@ -135,12 +136,30 @@ class Essbase
         end
 
 
+        # Returns an array containing this member plus its children.
+        #
+        # @return [Array<Member>] An array of the member and its child members.
+        def ichildren
+            [self] + @children
+        end
+
+
         # @return [Array<Member>] the other shared instances of this member.
         def shared_members
             if @non_shared_member
                 @non_shared_member.shared_members.reject{ |m| m == self }
             else
                 @shared_members.clone
+            end
+        end
+
+
+        # @return [Array<Member>] all instances of this member.
+        def ishared_members
+            if @non_shared_member
+                [@non_shared_member] + @non_shared_member.shared_members
+            else
+                [self] + @shared_members
             end
         end
 
@@ -288,6 +307,24 @@ class Essbase
             else
                 rels.select{ |mbr| mbr.generation_number == gen_or_lvl }
             end
+        end
+
+
+        # @return [String] A member property (default is name) indented by
+        #  2 spaces for each generation this member is from the top of the
+        #  tree.
+        def indent_by_gen(prop = :name)
+            val = self.send(prop.intern)
+            "#{'  ' * (self.generation - 1)}#{val}"
+        end
+
+
+        # @return [String] A member property (default is name) indented by
+        #  2 spaces for each level this member is from the bottom of the
+        #  tree.
+        def indent_by_level(prop = :name)
+            val = self.send(prop.intern)
+            "#{'  ' * self.level}#{val}"
         end
 
 
