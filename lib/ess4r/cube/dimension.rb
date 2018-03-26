@@ -120,19 +120,39 @@ class Essbase
         # member.
         #
         # The following relationship macros are supported:
-        # - +.Parent+ returns the member parent
-        # - +.[I,R]Ancestors+ returns the member's ancestors
-        # - +.[I]Children+ returns the member's children; supports the I modifier
-        # - +.[I,R]Descendants+ returns the member's descendants
-        # - +.[R]Leaves+ or +.[R]Level0+ returns the leaf/level 0 descendants of
-        #   the member
-        # - +.[R]Level<N>+ returns the related members at level _N_
-        # - +.[R]Generation<N>+ returns the related members at generation _N_
-        # - +.UDA(<uda>)+ returns descendants of the member that have the UDA <uda>
+        #   - +.Parent+ returns the member parent
+        #   - +.[I,R]Ancestors+ returns the member's ancestors
+        #   - +.[I]Children+ returns the member's children; supports the I modifier
+        #   - +.[I,R]Descendants+ returns the member's descendants
+        #   - +.[R]Leaves+ or +.[R]Level0+ returns the leaf/level 0 descendants of
+        #     the member
+        #   - +.[R]Level<N>+ returns the related members at level _N_
+        #   - +.[R]Generation<N>+ returns the related members at generation _N_
+        #   - +.UDA(<uda>)+ returns descendants of the member that have the UDA <uda>
         #
         # All of the above do not require querying of Essbase, and so are cheap
         # to evaluate. Alternatively, Essbase calc functions can be used to express
         # more complicated relationships, such as compound relationships.
+        #
+        # The +mbr_spec+ can be a single specification (using the macros or calc
+        # syntax described), or it can an array of specifications, each of which
+        # is expanded to the corresponding set of member(s). By default, each such
+        # set of member(s) is appended to the result, but several other possibilities
+        # are supported, using an optional operation type prefix:
+        #   - :add <spec> or + <spec>: The member set is appended to the results;
+        #     this is the default behaviour when no operation type is specified.
+        #   - :minus <spec> or - <spec>: The resulting member(s) are removed from
+        #     the results. Members in this set that are not in the results are
+        #     ignored.
+        #   - :filter <ruby expr>: The current result set is filtered to only
+        #     include members that satisy <ruby expr>. The results are always
+        #     Member object instances, so the filter expression can use any
+        #     properties of the members to define the filter condition.
+        #   - :map <ruby expor>: The current result set is mapped using <ruby expr>,
+        #     e.g. ":map parent" would convert the results to the parents of the
+        #     members currently in the result set. The result of the :map operation
+        #     should be Member objects.
+        #   - :unique: Removes duplicates from the result set.
         #
         # @param mbr_spec [Array|String] A string or array of strings containing
         #   member names, optionally followed by an expansion macro, such as
@@ -144,75 +164,109 @@ class Essbase
             all_mbrs = []
             mbr_spec.each do |spec|
                 spec.strip!
-                case spec[0]
-                when '-'
-                    op = :remove
-                    spec = spec[1..-1].strip
-                when '+'
-                    op = :add
-                    spec = spec[1..-1].strip
-                else
-                    op = :add
-                end
                 case spec
-                when /^['"\[]?(.+?)['"\]]?\.(Parent|I?Children|I?R?Descendants|I?R?Ancestors|R?Level0|R?Leaves|I?Shared)$/i
-                    # Memer name with expansion macro
-                    mbr = self[$1]
-                    raise ArgumentError, "Unrecognised #{self.name} member '#{$1}' in #{spec}" unless mbr
-                    mthd = $2.downcase
-                    mthd += '_members' if mthd =~ /shared$/
-                    rels = mbr.send(mthd.intern)
-                    mbrs = rels.is_a?(Array) ? rels : [rels]
-                when /^['"\[]?(.+?)['"\]]?\.(R)?(Level|Generation|Relative)\(?(\d+)\)?$/i
-                    # Memer name with level/generation expansion macro
-                    mbr = self[$1]
-                    sign = $3.downcase == 'level' ? -1 : 1
-                    raise ArgumentError, "Unrecognised #{self.name} member '#{$1}' in #{spec}" unless mbr
-                    mbrs = mbr.relative($4.to_i * sign, !!$2)
-                when /^['"\[]?(.+?)['"\]]?\.UDA\(['"]?(.+?)['"]?\)$/i
-                    # Memer name with UDA expansion macro
-                    mbr = self[$1]
-                    raise ArgumentError, "Unrecognised #{self.name} member '#{$1}' in #{spec}" unless mbr
-                    mbrs = mbr.idescendants.select{ |mbr| mbr.has_uda?($2) }
-                when /[@:,]/
-                    # An Essbase calc function or range - execute query and use results to find Member objects
-                    mbrs = []
-                    mbr_sel = try{ @cube.open_member_selection("MemberQuery") }
-                    begin
-                        mbr_sel.execute_query(<<-EOQ.strip, spec)
-                            <OutputType Binary
-                            <SelectMbrInfo(MemberName, ParentMemberName)
-                        EOQ
-                        mbr_sel.get_members && mbr_sel.get_members.get_all.each do |ess_mbr|
-                            mbr = self[ess_mbr.name]
-                            raise ArgumentError, "No member in #{self.name} named '#{ess_mbr.name}'" unless mbr
-                            if mbr.parent && mbr.parent.name != ess_mbr.parent_member_name
-                                mbr = mbr.shared_members.find{ |mbr| mbr.parent.name == ess_mbr.parent_member_name }
-                                raise "Cannot locate #{ess_mbr.name} with parent #{ess_mbr.parent_member_name}" unless mbr
-                            end
-                            mbrs << mbr
-                        end
-                    ensure
-                        mbr_sel.close
-                    end
-                when /^['"\[]?(.+?)['"\]]?$/
-                    # Plain member name
-                    mbr = self[$1]
-                    raise ArgumentError, "Unrecognised #{self.name} member '#{$1}'" unless mbr
-                    mbrs = [mbr]
+                when /^(\-|[:!]minus\s)\s*(.+)/
+                    all_mbrs -= process_member_spec($2)
+                when /^(\+|[:!]add\s)\s*(.+)/
+                    all_mbrs += process_member_spec($2)
+                when /^\||[:!]filter\s)\s*(.+)/
+                    spec = eval("lambda{ #{$2} }")
+                    all_mbrs.select!{ |mbr| mbr.instance_exec(&spec) }
+                when /^([:!]map\s)\s*(.+)/
+                    spec = eval("lambda{ #{$2} }")
+                    all_mbrs.map!{ |mbr| mbr.instance_exec(&spec) }.flatten!
+                when /^[!:]uniq(ue)?\s*$/
+                    all_mbrs.uniq!
                 else
-                    raise ArgumentError, "Unrecognised #{self.name} member '#{spec}'"
-                end
-                if op == :add
-                    all_mbrs.concat(mbrs)
-                else
-                    all_mbrs -= mbrs
+                    all_mbrs.concat(process_member_spec(spec))
                 end
             end
             if all_mbrs.size == 0 && options.fetch(:raise_if_empty, true)
                 raise ArgumentError, "Member specification #{mbr_spec} for #{self.name} returned no members"
             end
             all_mbrs
+        end
+
+
+        # Takes a +spec+ and expands it into an Array of matching Member objects.
+        #
+        # Member names may be followed by various macros indicating relations of
+        # the member to return, or alternatively, an Essbase calc function may be
+        # used to query the outline for matching members.
+        #
+        # Relationship macros cause a member to be replaced by an expansion set
+        # of members that have that relationship to the member. A macro is specified
+        # by the addition of a +.<Relation>+ suffix, e.g. <Member>.Children.
+        # Additionally, the relationship in question may be further qualified by +I+
+        # and/or +R+ modifiers, where +I+ means include the member itself in the
+        # expansion set, and +R+ means consider all hierarchies when expanding the
+        # member.
+        #
+        # The following relationship macros are supported:
+        #   - +.Parent+ returns the member parent
+        #   - +.[I,R]Ancestors+ returns the member's ancestors
+        #   - +.[I]Children+ returns the member's children; supports the I modifier
+        #   - +.[I,R]Descendants+ returns the member's descendants
+        #   - +.[R]Leaves+ or +.[R]Level0+ returns the leaf/level 0 descendants of
+        #     the member
+        #   - +.[R]Level<N>+ returns the related members at level _N_
+        #   - +.[R]Generation<N>+ returns the related members at generation _N_
+        #   - + .[I]Shared returns all other instances of the member
+        #   - +.UDA(<uda>)+ returns descendants of the member that have the UDA <uda>
+        #
+        # All of the above do not require querying of Essbase, and so are cheap
+        # to evaluate. Alternatively, Essbase calc functions can be used to express
+        # more complicated relationships, such as compound relationships.
+        def process_member_spec(spec)
+        case spec.strip
+            when /^['"\[]?(.+?)['"\]]?\.(Parent|I?Children|I?R?Descendants|I?R?Ancestors|R?Level0|R?Leaves|I?Shared)$/i
+                # Memer name with expansion macro
+                mbr = self[$1]
+                raise ArgumentError, "Unrecognised #{self.name} member '#{$1}' in #{spec}" unless mbr
+                mthd = $2.downcase
+                mthd += '_members' if mthd =~ /shared$/
+                rels = mbr.send(mthd.intern)
+                mbrs = rels.is_a?(Array) ? rels : [rels]
+            when /^['"\[]?(.+?)['"\]]?\.(R)?(Level|Generation|Relative)\(?(\d+)\)?$/i
+                # Memer name with level/generation expansion macro
+                mbr = self[$1]
+                sign = $3.downcase == 'level' ? -1 : 1
+                raise ArgumentError, "Unrecognised #{self.name} member '#{$1}' in #{spec}" unless mbr
+                mbrs = mbr.relative($4.to_i * sign, !!$2)
+            when /^['"\[]?(.+?)['"\]]?\.UDA\(['"]?(.+?)['"]?\)$/i
+                # Memer name with UDA expansion macro
+                mbr = self[$1]
+                raise ArgumentError, "Unrecognised #{self.name} member '#{$1}' in #{spec}" unless mbr
+                mbrs = mbr.idescendants.select{ |mbr| mbr.has_uda?($2) }
+            when /[@:,]/
+                # An Essbase calc function or range - execute query and use results to find Member objects
+                mbrs = []
+                mbr_sel = try{ @cube.open_member_selection("MemberQuery") }
+                begin
+                    mbr_sel.execute_query(<<-EOQ.strip, spec)
+                        <OutputType Binary
+                        <SelectMbrInfo(MemberName, ParentMemberName)
+                    EOQ
+                    mbr_sel.get_members && mbr_sel.get_members.get_all.each do |ess_mbr|
+                        mbr = self[ess_mbr.name]
+                        raise ArgumentError, "No member in #{self.name} named '#{ess_mbr.name}'" unless mbr
+                        if mbr.parent && mbr.parent.name != ess_mbr.parent_member_name
+                            mbr = mbr.shared_members.find{ |mbr| mbr.parent.name == ess_mbr.parent_member_name }
+                            raise "Cannot locate #{ess_mbr.name} with parent #{ess_mbr.parent_member_name}" unless mbr
+                        end
+                        mbrs << mbr
+                    end
+                ensure
+                    mbr_sel.close
+                end
+            when /^['"\[]?(.+?)['"\]]?$/
+                # Plain member name
+                mbr = self[$1]
+                raise ArgumentError, "Unrecognised #{self.name} member '#{$1}'" unless mbr
+                mbrs = [mbr]
+            else
+                raise ArgumentError, "Unrecognised #{self.name} member '#{spec}'"
+            end
         end
 
 
