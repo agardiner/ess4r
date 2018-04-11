@@ -53,6 +53,7 @@ class Essbase
         # @param inherited [Boolean] If true (the default), and the variable is
         #   not set at the database level, searches the application- and server-
         #   level variables as well.
+        # @return [String] the value of the substitution variable.
         def get_substitution_variable_value(sub_var, inherited = true)
             sub_var =~ /^&?(.+)$/
             var_name = $1

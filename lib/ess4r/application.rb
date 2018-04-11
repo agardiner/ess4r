@@ -29,6 +29,16 @@ class Essbase
         end
 
 
+        # Return each of the databases in this application (as a Cube object).
+        #
+        # @return [Array<Cube>] An array of Cube instances representing each
+        #   database in this application.
+        def cubes
+            require_relative 'cube'
+            try{ @app.getCubes.getAll().to_a }.map{ |c| Cube.new(c) }
+        end
+
+
         # Download the application log file from the server.
         #
         # @param local_file [String] The path to the local file into which the
