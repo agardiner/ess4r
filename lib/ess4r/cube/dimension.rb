@@ -165,15 +165,17 @@ class Essbase
             mbr_spec.each do |spec|
                 spec.strip!
                 case spec
-                when /^(\-|[:!]minus\s)\s*(.+)/
-                    all_mbrs -= process_member_spec($2)
-                when /^(\+|[:!]add\s)\s*(.+)/
-                    all_mbrs += process_member_spec($2)
-                when /^\||[:!]filter\s)\s*(.+)/
-                    spec = eval("lambda{ #{$2} }")
+                when /^(?:\-|[:!](?:minus|not)\s)\s*(.+)/
+                    all_mbrs -= process_member_spec($1)
+                when /^(?:\+|[:!](?:add|or)\s)\s*(.+)/
+                    all_mbrs += process_member_spec($1)
+                when /^(?:\&|[:!]and\s)\s*(.+)/
+                    all_mbrs = all_mbrs & process_member_spec($1)
+                when /^[:!]filter\s+(.+)/
+                    spec = eval("lambda{ #{$1} }")
                     all_mbrs.select!{ |mbr| mbr.instance_exec(&spec) }
-                when /^([:!]map\s)\s*(.+)/
-                    spec = eval("lambda{ #{$2} }")
+                when /^[:!]map\s+(.+)/
+                    spec = eval("lambda{ #{$1} }")
                     all_mbrs.map!{ |mbr| mbr.instance_exec(&spec) }.flatten!
                 when /^[!:]uniq(ue)?\s*$/
                     all_mbrs.uniq!
