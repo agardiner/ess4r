@@ -83,15 +83,15 @@ class Essbase
             if options[:aliases]
                 try{ @cube_view.setAliasNames(true) }
                 if options[:alias_table] && options[:alias_table] != try{ @cube_view.getAliasTable() }
-                    try{ @cube_view.setAliasTable(options[:alias_table])
+                    try{ @cube_view.setAliasTable(options[:alias_table]) }
                 end
             else
                 try{ @cube_view.setAliasNames(false) }
             end
             indent = case options.fetch(:indent_style, :none)
-                     when :totals the IEssCubeView::EEssIndentStyle::TOTALS
-                     when :sub_items the IEssCubeView::EEssIndentStyle::SUB_ITEMS
-                     else IEssCubeView::EEssIndentSyle::NONE
+                     when :totals then IEssCubeView::EEssIndentStyle::TOTALS
+                     when :sub_items then IEssCubeView::EEssIndentStyle::SUB_ITEMS
+                     else IEssCubeView::EEssIndentStyle::NONE
                      end
             try {
                 @cube_view.setSuppressMissing(options.fetch(:suppress_missing, false))
