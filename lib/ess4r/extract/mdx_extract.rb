@@ -131,6 +131,16 @@ class Essbase
 
         # Handle any sparse dynamic calc substitutions for MDX calcs, plus any
         # additional MDX calculations.
+        # Calculations are defined in an extract specification via two options:
+        #  - dynamic_calc_substitutions: Define MDX calculations that can be used
+        #    to replace a sparse dynamic calc member in a query. Each dynamic
+        #    calc substitution must be defined under a key for the dimension to
+        #    which it belongs, and specify the data member(s) that are used in
+        #    the calculation (as these members must be included in the query, but
+        #    filtered out of the results) under a +data_members+ key, as well as
+        #    the MDX formula to use.
+        # - mdx_calculations: Define additional calculations that can be referenced
+        #   in member specifications for a dimension.
         #
         # @param options [Hash] An options hash.
         # @option options [Boolean] :diable_mdx_calcs If true, turns off the use

@@ -169,7 +169,7 @@ class Essbase
                     all_mbrs -= process_member_spec($1)
                 when /^(?:\+|[:!](?:add|or)\s)\s*(.+)/
                     all_mbrs += process_member_spec($1)
-                when /^(?:\&|[:!]and\s)\s*(.+)/
+                when /^[:!]and\s+(.+)/  # Can't use & as a shortcut, since that identifies a subvar
                     all_mbrs = all_mbrs & process_member_spec($1)
                 when /^[:!]filter\s+(.+)/
                     spec = eval("lambda{ #{$1} }")
