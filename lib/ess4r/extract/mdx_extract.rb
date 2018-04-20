@@ -241,12 +241,13 @@ class Essbase
             non_empty_blocks = non_empty && @cube.cube_type.to_s == 'Normal' &&
                                     (!options.fetch(:include_sparse_dynamic_calcs, false) ||
                                      @sparse_dynamic_calcs.size == 0)
-            non_empty_spec = "#{non_empty_blocks ? 'NONEMPTYBLOCK ' : ''}#{non_empty ? 'NON EMPTY ' : ''}"
+            non_empty_block_spec = non_empty_blocks ? ' NONEMPTYBLOCK' : ''
+            non_empty_spec = non_empty ? 'NON EMPTY ' : ''
 
             mdx = <<-EOQ.gsub(/^ {16}/, '')
                 WITH
                 #{with_stmts}
-                SELECT#{page_spec.length > 0 ? " #{non_empty_spec}#{page_spec} ON PAGES," : ''}
+                SELECT#{non_empty_block_spec}#{page_spec.length > 0 ? " #{non_empty_spec}#{page_spec} ON PAGES," : ''}
                   #{non_empty_spec}#{row_spec} ON ROWS,
                   #{col_spec} ON COLUMNS
                 #{pov_spec}
