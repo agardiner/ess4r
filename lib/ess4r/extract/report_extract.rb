@@ -14,10 +14,10 @@ class Essbase
         #   - The keys of the hash are the dimensions, and the values are the
         #     member specifications (which will be expanded via
         #     Dimension#expand_members).
-        #   - The keys of the hash are axis specifiers containing :pov (optional),
-        #     :page (optional), :row (required) and :column (required) keys, and
-        #     the values are Hashes of dimension => member specifications (which
-        #     will be expanded via Dimension#expand_members).
+        #   - The keys of the hash are axis specifiers containing :page (optional),
+        #     :row (required) and :column (required) keys, and the values are
+        #     Hashes of dimension => member specifications (which will be expanded
+        #     via Dimension#expand_members).
         def initialize(cube, extract_spec, options = {})
             super(cube, extract_spec)
 
@@ -82,7 +82,7 @@ class Essbase
 
             # Determine layout
             assign_axes(options)
-            raise ArgumentError, "POV axis is not supported for report extracts" if @pov_dims.size > 0
+            raise ArgumentError, "POV axis is not supported for report extracts; use PAGE instead" if @pov_dims.size > 0
             layout = []
             layout << %{<PAGE(#{quote_mbrs(@page_dims).join(', ')})} if @page_dims.size > 0
             layout << %{<ROW(#{quote_mbrs(@row_dims).join(', ')})}
