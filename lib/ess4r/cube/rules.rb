@@ -27,6 +27,7 @@ class Essbase
             locale = self && self.application.locale
             if locale =~ /^UTF/
                 rule_file.setEncoding(EssRFRulesFile::ENCODING_UTF8)
+                rule_file.setLocale(locale)
             elsif locale
                 rule_file.setEncoding(EssRFRulesFile::ENCODING_NONUNICODE)
                 rule_file.setLocale(locale)
@@ -34,11 +35,11 @@ class Essbase
 
             ff = EssRFFlatFile.new
             case delimiter
-            when :tab
+            when :tab, '\t'
                 ff.setColumnDelimiter(EssRFFlatFile::TAB)
-            when :comma
+            when :comma, ','
                 ff.setColumnDelimiter(EssRFFlatFile::COMMA)
-            when :space, :whitespace
+            when :space, :whitespace, ' '
                 ff.setColumnDelimiter(EssRFFlatFile::WHITESPACE)
             end
 
@@ -50,9 +51,14 @@ class Essbase
             ds.setFileProperties(ff)
             rule_file.setDatasource(ds)
 
-            fields.each do |fld|
+            fields.each_with_index do |fld, i|
                 f = EssRFField.new
                 f.setName(fld) unless use_header_for_field_names
+                if (i + 1 == fields.size) && opts[:data_field]
+                    dlp = EssRFFieldDataloadProperties.new
+                    dlp.data_field = true
+                    f.dataload_properties = dlp
+                end
                 rule_file.addField(f)
             end
 
