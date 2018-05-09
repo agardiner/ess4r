@@ -60,10 +60,22 @@ class Essbase
     #   services (APS) is lighter-weight, and more likely to be usable from
     #   client machines outside the data centre, since it uses the same server
     #   as SmartView.
+    # @param options [Hash] An options hash; see MessageHandler#new.
     #
     # @return [Server] A Server instance representing a connection to the requested
     #   Essbase server.
-    def self.connect(user, password, server = 'localhost', aps_url = 'embedded')
+    def self.connect(user, password, server = 'localhost', aps_url = 'embedded', options = {})
+        if !options
+            if server.is_a?(Hash)
+                options = server
+                server = 'localhost'
+                aps_url = 'embedded'
+            elsif aps_url.is_a?(Hash)
+                options = aps_url
+                aps_url = 'embedded'
+            end
+        end
+
         if aps_url =~ /^embedded$/i && !@jars_loaded
             # Load additional jar files required in embedded mode
             load_jars 'ess_es_server.jar', 'ojdl.jar'
@@ -76,7 +88,7 @@ class Essbase
             ol = Java::OracleCoreOjdlLogging::ODLLogger.getODLLogger("oracle.EPMOHPS")
             ol.set_level(Java::JavaUtilLogging::Level::OFF)
         end
-        Server.new(user, password, server, aps_url)
+        Server.new(user, password, server, aps_url, options)
     end
 
 end

@@ -55,8 +55,15 @@ class Essbase
 
 
         # Create a new message handler for processing log messages from Essbase
-        def initialize
-            @suppress_message_nums = DEFAULT_SUPPRESS_MSGS
+        #
+        # @param options [Hash] Ah options hash
+        # @option options [Array<Integer>] :suppress_message_nums An array of message
+        #   numbers identifying messages that should be suppressed (i.e. not logged)
+        # @option options [Java::JavaUtilLogging::Logger] :log A java.util.logging.Logger
+        #   instance to use for logging Essbase messages
+        def initialize(options = {})
+            @suppress_message_nums = options.fetch(:suppress_message_nums, DEFAULT_SUPPRESS_MSGS)
+            @log = options[:log] || options[:logger]
         end
 
 

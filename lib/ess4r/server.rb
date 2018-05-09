@@ -25,16 +25,17 @@ class Essbase
         # @param aps_url [String] The URL of the APS server to connect through.
         #   Pass +embedded+ as the URL to use the embedded client and connect
         #   directly to the Essbase server.
+        # @param options [Hash] An options hash; see MessageHandler#new.
         #
         # @note This method should not be called directly - instead, instantiate
         #   a server connection via {Essbase.connect}.
-        def initialize(user, password, server, aps_url)
+        def initialize(user, password, server, aps_url, options = {})
             super("@server")
 
             log.fine "Connecting to Essbase server #{server} as #{user}"
             instrument "sign_on", :server => server, :user_id => user, :aps_url => aps_url do
                 @server = try{ Essbase.instance.sign_on(user, password, false, nil, aps_url, server) }
-                @message_handler = MessageHandler.new
+                @message_handler = MessageHandler.new(options)
                 try{ @server.set_message_handler(@message_handler) }
             end
         end
