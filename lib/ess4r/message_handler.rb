@@ -56,23 +56,21 @@ class Essbase
 
         # Create a new message handler for processing log messages from Essbase
         #
-        # @param options [Hash] Ah options hash
+        # @param log [Java::JavaUtilLogging::Logger] The logger to use for log
+        #   messages.
+        # @param options [Hash] Ah options hash.
+        # @option options [Boolean] :include_message_num If true, the Essbase
+        #   message number will be included at the end of the log message.
+        # @option options [String] :connection_id An optional connection id
+        #   to be included at the start of the log message to assist in differentiating
+        #   different connections to Essbase.
         # @option options [Array<Integer>] :suppress_message_nums An array of message
         #   numbers identifying messages that should be suppressed (i.e. not logged)
-        # @option options [Java::JavaUtilLogging::Logger] :log A java.util.logging.Logger
-        #   instance to use for logging Essbase messages
-        def initialize(options = {})
-            @suppress_message_nums = options.fetch(:suppress_message_nums, DEFAULT_SUPPRESS_MSGS)
-            @log = options[:log] || options[:logger]
-        end
-
-
-        # Lazily return a logger that can be used for logging.
-        #
-        # @note Lazy instantiation of the logger is important to prevent issues
-        #   with serialisation when connecting in 3-tier mode via an APS server.
-        def log
-            @log ||= Java::JavaUtilLogging::Logger.getLogger('ess4r.essbase')
+        def initialize(log, options = {})
+            @log = log
+            @include_message_num = options[:include_message_num]
+            @connection_id = options[:connection_id]
+            @suppress_message_nums = options.fetch(:suppress_message_nums, DEFAULT_SUPPRESS_MSGS.clone)
         end
 
 

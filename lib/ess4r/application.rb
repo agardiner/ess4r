@@ -16,6 +16,11 @@ class Essbase
     # Wraps an IEssOlapApplication implementing class returned from {Server#open_app}.
     class Application < Base
 
+        # Return the server object for this application.
+        attr_reader :server
+        alias_method :get_olap_server, :server
+
+
         # @!visibility private
         #
         # Create an instance of this class, wrapping the supplied IEssOlapApplication
@@ -23,9 +28,31 @@ class Essbase
         #
         # @see Server#open_app
         #
+        # @param server [Server] The Essbase server object on which the application
+        #   exists.
         # @param app [IEssOlapApplication] The JAPI application object to wrap.
-        def initialize(app)
-            super('@app', app)
+        def initialize(server, app)
+            super(server.log, '@app', app)
+            @server = server
+        end
+
+
+        # Returns a {Cube} object for the specified database.
+        #
+        # @param ess_db [String] The name of the database to open.
+        def cube(ess_db)
+            require_relative 'cube'
+
+            cube = Cube.new(self, try{ @app.getCube(ess_db) })
+            if block_given?
+                begin
+                    yield cube
+                    cube.close
+                    nil
+                end
+            else
+                cube
+            end
         end
 
 
@@ -35,7 +62,7 @@ class Essbase
         #   database in this application.
         def cubes
             require_relative 'cube'
-            try{ @app.getCubes.getAll().to_a }.map{ |c| Cube.new(c) }
+            try{ @app.getCubes().getAll().to_a }.map{ |c| Cube.new(self, c) }
         end
 
 

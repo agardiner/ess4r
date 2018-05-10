@@ -47,11 +47,15 @@ class Essbase
         end
 
 
+        # @!visibility private
+        #
         # Creates a new MdxDataSet object.
         #
-        # @!visibility private
-        def initialize(data_set)
-            super("@data_set", data_set)
+        # @param cube_view [CubeView] The CubeView from which this MDX data set
+        #   was created.
+        # @param data_set [IEssMdDataSet] The JAPI data set object to be wrapped.
+        def initialize(cube_view, data_set)
+            super(cube_view.log, '@data_set', data_set)
             axes = try{ @data_set.get_all_axes.to_a }
             # If a slicer (i.e. a WHERE clause) is specified, the slicer members
             # are the first axis; otherwise, columns are first.

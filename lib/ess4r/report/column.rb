@@ -21,7 +21,7 @@ class Essbase
             # @param idx [Fixnum] The column number at which this column will
             #   appear (0-based).
             def initialize(report, col_cfg, all_maps, idx)
-                super('report')
+                super(report.log)
                 @report = report
                 content = get_hash_val(col_cfg, :content)
                 case content

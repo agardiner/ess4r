@@ -70,34 +70,34 @@ class Essbase
             # Creates a FileObject
             #
             # @!visibility private
-            def initialize(file_obj)
-                super('@file', file_obj)
+            def initialize(cube, file_obj)
+                super(cube.log, '@file', file_obj)
             end
 
 
             # @return [Time] the time at which the file was last modified.
             def time_modified
-                Time.at(@file.time_modified.to_a[0])
+                Time.at(try{ @file.getTimeModified() }.to_a[0])
             end
 
 
             # @return [Time] the time at which the file was locked, or nil if it
             #   is not locked.
             def time_stamp
-                ts = @file.getTimeStamp
+                ts = try{ @file.getTimeStamp() }
                 Time.at(ts) if ts > 0
             end
 
 
             # @return [String] the name and extension for the file object.
             def file_name
-                "#{@file.name}#{self.class.extension_for(@file.type)}"
+                "#{self.name}#{self.class.extension_for(self.type)}"
             end
 
 
             # @return [Integer] the size of the file.
             def size
-                @file.getFileSizeLong() rescue @file.getFileSize()
+                try{ @file.getFileSizeLong() } rescue try{ @file.getFileSize() }
             end
 
 
@@ -111,7 +111,7 @@ class Essbase
             def inspect
                 "%-12s  %s  %dKB" % [
                     self.file_name,
-                    time_modified.strftime('%d-%m-%Y %H:%M:%S'),
+                    self.time_modified.strftime('%d-%m-%Y %H:%M:%S'),
                     self.size / 1024
                 ]
             end
@@ -128,11 +128,11 @@ class Essbase
         def list_files(file_spec = '*')
             filter = Regexp.new("^#{file_spec.gsub('.', '\.').gsub('?', '.').gsub('*', '.*')}$",
                                 Regexp::IGNORECASE)
-            items = self.getOlapFileObjects(Essbase::IEssOlapFileObject.TYPE_ALL).sort_by(&:name)
+            items = self.get_olap_file_objects(Essbase::IEssOlapFileObject.TYPE_ALL).sort_by(&:name)
             files = []
             items.each do |item|
                 next unless item.type != 8192 && (filter.nil? || item.name =~ filter)
-                files << FileObject.new(item)
+                files << FileObject.new(self, item)
             end
             files
         end

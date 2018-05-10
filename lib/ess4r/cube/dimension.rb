@@ -11,6 +11,8 @@ class Essbase
 
         include Enumerable
 
+        # The {Cube} to which this dimension belongs
+        attr_reader :cube
         # @return [String] the name of the dimension.
         attr_reader :name
         # @return [String] the storage type: Dense or Sparse.
@@ -28,7 +30,7 @@ class Essbase
         # @param ess_dim [IEssDimension] The JAPI IEssDimension object this class
         #   is to wrap.
         def initialize(cube, ess_dim)
-            super()
+            super(cube.log)
             @name = ess_dim.name
             @storage_type = ess_dim.storage_type.to_s
             @tag = ess_dim.tag.to_s

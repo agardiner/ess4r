@@ -49,7 +49,7 @@ class Essbase
         #     the values are Hashes of dimension => member specifications (which
         #     will be expanded via Dimension#expand_members).
         def initialize(cube, extract_spec)
-            super('extract')
+            super(cube.log)
             @cube = cube
             @extract_spec = extract_spec
         end

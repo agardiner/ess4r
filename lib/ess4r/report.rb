@@ -68,7 +68,7 @@ class Essbase
         #   set to 50, then a maximum of 50 records will be returned for any
         #   individual entity.
         def initialize(name, cube, extract, layout, options = {})
-            super('report')
+            super(cube.log)
             @name = name
             @cube = cube
             @extract = extract.is_a?(Extract) ? extract :

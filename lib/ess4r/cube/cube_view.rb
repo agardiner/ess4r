@@ -7,21 +7,27 @@ class Essbase
         include_package 'com.essbase.api.dataquery'
 
 
+        # Return the {Cube} that this cube view relates to.
+        attr_reader :cube
+        alias_method :get_cube, :cube
+
+
         # Creates a new CubeView object to wrap the supplied +cube_view+ JAPI
         # object.
         #
         # Note: CubeView objects should be instantiated via Cube#open_cube_view.
         #
         # @private
-        def initialize(cube_view)
-            super("@cube_view", cube_view)
+        def initialize(cube, cube_view)
+            super(cube.log, '@cube_view', cube_view)
+            @cube = cube
         end
 
 
         # Closes this CubeView onto the database. Once closed, a CubeView can
         # no longer be used.
         def close
-            try{ @cube_view.close }
+            try{ @cube_view.close() }
             @cube_view = nil
         end
 
@@ -60,7 +66,7 @@ class Essbase
             instrument "mdx_query", mdx: mdx_stmt do
                 try{ @cube_view.performOperation(op) }
             end
-            MdxDataSet.new(try{ @cube_view.getMdDataSet })
+            MdxDataSet.new(self, try{ @cube_view.getMdDataSet() })
         end
 
 
@@ -113,8 +119,8 @@ class Essbase
         #   actual calc script code, not a calc script name; see #run_calc for
         #   running an existing calc script that exists as a file).
         def run_calc(calc_str)
-            op = @cube_view.createIEssOpCalculate()
-            op.set(calc_str, false)
+            op = try{ @cube_view.createIEssOpCalculate() }
+            try{ op.set(calc_str, false) }
             instrument "calculate", calc: calc_str do
                 try{ @cube_view.performOperation(op) }
             end

@@ -11,15 +11,15 @@ class Essbase
         attr_reader :count
 
 
+        # @!visibility private
+        #
         # Instantiate a MaxL session.
         #
         # Note: This method should not be invoked directly; see instead
-        # Server#open_maxl.
-        #
-        # @!visibility private
-        def initialize(maxl_session, message_handler)
-            super("@maxl", maxl_session)
-            @message_handler = message_handler
+        #   Server#open_maxl.
+        def initialize(server, maxl_session)
+            super(server.log, '@maxl', maxl_session)
+            @server = server 
             @count = nil
         end
 
@@ -63,7 +63,7 @@ class Essbase
         # @return [MaxlResultSet] an object representing the result set from the last
         #   Maxl command.
         def result_set
-            MaxlResultSet.new(@maxl.result_set)
+            MaxlResultSet.new(self, @maxl.result_set)
         end
 
 
@@ -84,7 +84,7 @@ class Essbase
                           when /fatal/i then MessageHandler::MSG_LVL_FATAL
                           when /debug/i then MessageHandler::MSG_LVL_DEBUG
                           end
-                @message_handler.process_message(msg_num, msg_lvl, msg_text)
+                @server.message_handler.process_message(msg_num, msg_lvl, msg_text)
                 count = (/Records returned: \[(\d+)\]/.match(msg_text)[1].to_i) if msg_num == 1241044
             end
             count

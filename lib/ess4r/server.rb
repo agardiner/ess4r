@@ -15,6 +15,8 @@ class Essbase
         attr_reader :message_handler
 
 
+        # @!visibility private
+        #
         # Create a connection to an Essbase server.
         #
         # @param user [String] The user id to connect with.
@@ -30,7 +32,10 @@ class Essbase
         # @note This method should not be called directly - instead, instantiate
         #   a server connection via {Essbase.connect}.
         def initialize(user, password, server, aps_url, options = {})
-            super("@server")
+            logger = options[:log] || options[:logger] ||
+                Java::JavaUtilLogging::Logger.getLogger('ess4r')
+
+            super(logger, '@server')
 
             log.fine "Connecting to Essbase server #{server} as #{user}"
             instrument "sign_on", :server => server, :user_id => user, :aps_url => aps_url do
@@ -63,22 +68,11 @@ class Essbase
             require_relative 'application'
 
             log.fine "Opening Essbase application #{ess_app}"
-            app = nil
-            instrument "open_app", app: ess_app do
-                app = Application.new(try{ @server.get_application(ess_app) })
-            end
-            if block_given?
-                begin
-                    yield app
-                    nil
-                end
-            else
-                app
-            end
+            Application.new(self, try{ @server.getApplication(ess_app) })
         end
 
 
-        # Open the specified application/database, and return a Cube object for
+        # Open the specified application/database, and return a {Cube} object for
         # interacting with it.
         #
         # @param ess_app [String] Essbase application name.
@@ -89,23 +83,12 @@ class Essbase
         #   database.
         # @return [Cube] A Cube object for interacting with the specified
         #   database.
-        def open_cube(ess_app, ess_db)
+        def open_cube(ess_app, ess_db, &blk)
+            require_relative 'application'
             require_relative 'cube'
 
             log.fine "Opening Essbase database #{ess_app}:#{ess_db}"
-            cube = nil
-            instrument "open_cube", app: ess_app, db: ess_db do
-                cube = Cube.new(try{ @server.get_application(ess_app).get_cube(ess_db) })
-            end
-            if block_given?
-                begin
-                    yield cube
-                    cube.close
-                    nil
-                end
-            else
-                cube
-            end
+            Application.new(self, try{ @server.getApplication(ess_app) }).cube(ess_db, &blk)
         end
 
 
@@ -121,7 +104,8 @@ class Essbase
         def open_maxl_session(session_name = 'Maxl')
             require_relative 'maxl'
 
-            maxl = Maxl.new(try{ @server.open_maxl_session(session_name) }, @message_handler)
+            log.fine "Opening Maxl session"
+            maxl = Maxl.new(self, try{ @server.open_maxl_session(session_name) })
             if block_given?
                 begin
                     yield maxl

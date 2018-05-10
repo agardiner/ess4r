@@ -178,7 +178,7 @@ class Essbase
                         if calcs.formula?
                             formula = calcs.formula
                         else
-                            formula = data_mbrs.surround('[', ']').join(' + ')
+                            formula = data_mbrs.map{ |m| "[#{m}]" }.join(' + ')
                         end
                         log.finer "MDX formula used is: #{formula}"
                         dim_calcs["#{dyn_mbr}_calc"] = formula

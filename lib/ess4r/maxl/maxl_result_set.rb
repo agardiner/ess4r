@@ -3,13 +3,17 @@ class Essbase
     # Represents a grid of results returned by MaxL.
     class MaxlResultSet < Base
 
+        # @!visibility private
+        #
         # Creates a MaxL result set.
         #
         # Note: Should not be instantiated directly
         #
-        # @private
-        def initialize(result_set)
-            super("@result_set", result_set)
+        # @param maxl [Maxl] A Maxl session object
+        # @param resultset [IEssMaxlResultSet] The Maxl result set JAPI object
+        #   to be wrapped.
+        def initialize(maxl, result_set)
+            super(maxl.log, '@result_set', result_set)
         end
 
 

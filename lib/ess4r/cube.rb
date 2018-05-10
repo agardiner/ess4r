@@ -20,20 +20,31 @@ class Essbase
         include Rules
 
 
+        # Returns the application that this cube belongs to.
+        attr_reader :application
+        alias_method :get_application, :application
+
+
+        # @!visibility private
+        #
         # Creates a new Cube object to wrap the supplied +cube+ JAPI object.
         #
-        # Note: Cube objects should be instantiated via Server#open_cube.
+        # @param app [Application] The Application object that this cube is
+        #   part of.
+        # @param cube [IEssCube] The IEssCube JAPI object to be wrapped.
         #
-        # @private
-        def initialize(cube)
-            super('@cube', cube)
+        # @note Cube objects should be instantiated via {Server#open_cube},
+        #   {Application#cube}, or {Application#cubes}.
+        def initialize(app, cube)
+            super(app.log, '@cube', cube)
+            @application = app
         end
 
 
         # Closes this connection to the Essbase database.
         def clear_active
             if @cube
-                try{ @cube.clear_active }
+                try{ @cube.clearActive() }
                 @cube = nil
             end
         end
@@ -42,7 +53,7 @@ class Essbase
 
         # Write a message to the Essbase application log.
         def write_to_log(msg)
-            try{ @cube.get_application.get_olap_server.write_to_log_file(false, msg) }
+            @application.server.write_to_log_file(false, msg)
         end
 
 
@@ -60,14 +71,13 @@ class Essbase
             log.finer "Retrieving value for substitution variable #{var_name}"
             val = nil
             begin
-                val = try{ @cube.get_substitution_variable_value(var_name) }
+                val = try{ @cube.getSubstitutionVariableValue(var_name) }
             rescue
                 raise unless inherited
-                app = @cube.get_application
                 begin
-                    val = try{ app.get_substitution_variable_value(var_name) }
+                    val = @application.get_substitution_variable_value(var_name)
                 rescue
-                    val = try{ app.get_olap_server.get_substitution_variable_value(var_name) }
+                    val = @application.server.get_substitution_variable_value(var_name)
                 end
             end
             val
@@ -122,7 +132,7 @@ class Essbase
 
             cube_view = nil
             instrument "open_cube_view" do
-                cube_view = CubeView.new(try{ @cube.open_cube_view(label) })
+                cube_view = CubeView.new(self, try{ @cube.openCubeView(label) })
             end
             if block_given?
                 begin
@@ -156,7 +166,7 @@ class Essbase
 
         # Returns the application and database name for the cube connection.
         def to_s
-            "#{@cube.application.name}:#{@cube.name}"
+            "#{@application.name}:#{self.name}"
         end
 
 
