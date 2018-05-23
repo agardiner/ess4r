@@ -222,7 +222,7 @@ class Essbase
         # to evaluate. Alternatively, Essbase calc functions can be used to express
         # more complicated relationships, such as compound relationships.
         def process_member_spec(spec)
-        case spec.strip
+            case spec.strip
             when /^['"\[]?(.+?)['"\]]?\.(Parent|I?Children|I?R?Descendants|I?R?Ancestors|R?Level0|R?Leaves|I?Shared)$/i
                 # Memer name with expansion macro
                 mbr = self[$1]
@@ -230,18 +230,18 @@ class Essbase
                 mthd = $2.downcase
                 mthd += '_members' if mthd =~ /shared$/
                 rels = mbr.send(mthd.intern)
-                mbrs = rels.is_a?(Array) ? rels : [rels]
+                rels.is_a?(Array) ? rels : [rels]
             when /^['"\[]?(.+?)['"\]]?\.(R)?(Level|Generation|Relative)\(?(\d+)\)?$/i
                 # Memer name with level/generation expansion macro
                 mbr = self[$1]
                 sign = $3.downcase == 'level' ? -1 : 1
                 raise ArgumentError, "Unrecognised #{self.name} member '#{$1}' in #{spec}" unless mbr
-                mbrs = mbr.relative($4.to_i * sign, !!$2)
+                mbr.relative($4.to_i * sign, !!$2)
             when /^['"\[]?(.+?)['"\]]?\.UDA\(['"]?(.+?)['"]?\)$/i
                 # Memer name with UDA expansion macro
                 mbr = self[$1]
                 raise ArgumentError, "Unrecognised #{self.name} member '#{$1}' in #{spec}" unless mbr
-                mbrs = mbr.idescendants.select{ |mbr| mbr.has_uda?($2) }
+                mbr.idescendants.select{ |mbr| mbr.has_uda?($2) }
             when /[@:,]/
                 # An Essbase calc function or range - execute query and use results to find Member objects
                 mbrs = []
@@ -263,11 +263,12 @@ class Essbase
                 ensure
                     mbr_sel.close
                 end
+                mbrs
             when /^['"\[]?(.+?)['"\]]?$/
                 # Plain member name
                 mbr = self[$1]
                 raise ArgumentError, "Unrecognised #{self.name} member '#{$1}'" unless mbr
-                mbrs = [mbr]
+                [mbr]
             else
                 raise ArgumentError, "Unrecognised #{self.name} member '#{spec}'"
             end
