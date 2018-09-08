@@ -40,7 +40,7 @@ class Essbase
             log.fine "Connecting to Essbase server #{server} as #{user}"
             instrument "sign_on", :server => server, :user_id => user, :aps_url => aps_url do
                 @server = try{ Essbase.instance.sign_on(user, password, false, nil, aps_url, server) }
-                @message_handler = MessageHandler.new(options)
+                @message_handler = MessageHandler.new(logger, options)
                 try{ @server.set_message_handler(@message_handler) }
             end
         end

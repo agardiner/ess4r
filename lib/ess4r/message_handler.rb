@@ -44,6 +44,8 @@ class Essbase
         ]
 
 
+        # Logger used to log Essbase server messages
+        attr_reader :log
         # Flag indicating whether to include the Essbase message number at the
         # end of the message.
         attr_accessor :include_message_num
