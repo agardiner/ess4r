@@ -99,9 +99,16 @@ class Essbase
         # @param calc_str [String] A calculation script to be executed (the
         #   actual calc script code, not a calc script name; see #run_calc for
         #   running an existing calc script that exists as a file).
-        def calculate(calc_str)
+        # @param rtsvs [Hash] A hash of runtime substitution variable names and
+        #   values.
+        def calculate(calc_str, rtsvs=nil)
             instrument "calculate", calc: calc_str do
-                try{ @cube.calculate(calc_str, false) }
+                if rtsvs
+                    subs = rtsvs.map{ |k, v| "#{k}=#{v};" }.join
+                    try{ @cube.calculate(calc_str, false) }
+                else
+                    try{ @cube.calcWithRunTimeSubVars(calc_str, false, subs) }
+                end
             end
         end
 
@@ -110,9 +117,16 @@ class Essbase
         #
         # @param calc_script [String] The name of a calculation script to be
         #   executed against this cube.
-        def run_calc(calc_script)
+        # @param rtsvs [Hash] A hash of runtime substitution variable names and
+        #   values.
+        def run_calc(calc_script, rtsvs=nil)
             instrument "calculate", calc_script: calc_script do
-                try{ @cube.calculate(false, calc_script) }
+                if rtsvs
+                    subs = rtsvs.map{ |k, v| "#{k}=#{v};" }.join
+                    try{ @cube.calcFileWithRunTinmeSubVars(false, calc_script, subs) }
+                else
+                    try{ @cube.calculate(false, calc_script) }
+                end
             end
         end
 
