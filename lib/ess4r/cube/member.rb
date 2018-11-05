@@ -1,5 +1,43 @@
 class Essbase
 
+    # Holds information about a single member; only the member name and
+    # dimension are stored in objects of this class. However, any Member
+    # properties/methods can be called, which will delegate to the full
+    # Member instance. MemberLite objects are returned by member query
+    # functions on the Cube class.
+    class MemberLite
+
+        # @return [Dimension] The Dimension object to which this member belongs.
+        attr_reader :dimension
+        # @return [String] The name of the member.
+        attr_reader :name
+
+
+        # Creates a new MemberLite object for the specified +dim+ from the IEssMember
+        # +mbr+.
+        #
+        # @!visibility private
+        def initialize(dim, mbr, parent=nil)
+            @dimension = dim
+            @name = mbr.getName()
+            @parent_name = mbr.getParentMemberName()
+            @member = nil
+        end
+
+
+        def method_missing(mthd_name, *args, &blk)
+            unless @member
+                @member = @dimension[@name]
+                if @parent_name && @member.parent.name != @parent_name
+                    @member = @member.shared_members.find{ |sm| sm.parent.name == @parent_name }
+                end
+            end
+            @member.send(mthd_name, *args, &blk)
+        end
+
+    end
+
+
     # Holds information about a single member. To obtain a Member instance, see
     # the {Dimension} class, and especially {Dimension#[]}.
     #

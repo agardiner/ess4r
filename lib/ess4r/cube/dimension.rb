@@ -17,8 +17,12 @@ class Essbase
         attr_reader :name
         # @return [String] the storage type: Dense or Sparse.
         attr_reader :storage_type
-        # @return the dimension tag: Accounts, Time, Attribute, etc.
+        # @return [String] the dimension tag: Accounts, Time, Attribute, etc.
         attr_reader :tag
+        # @return [Integer] the number of members in the dimension in the outline
+        attr_reader :declared_size
+        # @return [Integer] the number of stored members in the dimension outline
+        attr_reader :actual_size
 
 
         # @!visibility private
@@ -36,6 +40,8 @@ class Essbase
             @tag = ess_dim.tag.to_s
             @cube = cube
             @root_member = nil
+            @declared_size = ess_dim.getDeclaredSize()
+            @actual_size = ess_dim.getActualSize()
         end
 
 

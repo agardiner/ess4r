@@ -107,7 +107,7 @@ class Essbase
                     subs = rtsvs.map{ |k, v| "#{k}=#{v};" }.join
                     try{ @cube.calculate(calc_str, false) }
                 else
-                    try{ @cube.calcWithRunTimeSubVars(calc_str, false, subs) }
+                    try{ @cube.calcWithRunTimeSubVars(false, calc_str, subs) }
                 end
             end
         end

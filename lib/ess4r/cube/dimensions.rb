@@ -44,17 +44,63 @@ class Essbase
         end
 
 
-        # Returns a Dimension object containing the members of the +dim_name+
-        # dimension. The Dimension object is cached for re-use, and Member
-        # objects include useful methods for navigating through a hierarchy.
+        # Returns a Dimension or Member object matching +name+.
         #
-        # @param dim_name [String] The name of the dimension to return.
+        # @param name [String] The name of the dimension or member to return.
+        # @return [Dimension|Member] A {Dimension} object representing the requested
+        #   dimension, or a Member object if the name corresponds to a member.
+        def [](name)
+            retrieve_dimensions unless @dimensions
+            dim = @dimensions[name.to_s.upcase]
+            dim or get_member(name)
+        end
+
+        # Return a Dimension object for the specified +dim_name+.
+        #
+        # @param dim_name [String] The name of the dimension to be returned.
         # @return [Dimension] A {Dimension} object representing the requested
         #   dimension.
-        def [](dim_name)
+        def get_dimension(dim_name)
             retrieve_dimensions unless @dimensions
             dim = @dimensions[dim_name.to_s.upcase]
             dim or raise ArgumentError, "No dimension named '#{dim_name}' exists in #{self}"
+        end
+
+        # Return a Member object for the specifed +mbr_name+.
+        #
+        # @param mbr_name [String] The name of the member to be returned.
+        # @return [MemberLite] A {MemberLite} object representing the requested
+        #   member.
+        def get_member(mbr_name)
+            mbr = try{ @cube.getMember(mbr_name) }
+            dim = self[try{ mbr.getDimensionName() }]
+            MemberLite.new(dim, mbr)
+        end
+
+
+        # Run a member query against this cube; a member query is any valid
+        # calc syntax member selection expression.
+        #
+        # @param spec [String] the query to find the member(s) of interest
+        # @return [Array<MemberLite>] an array of member(s) satisfying the
+        #   query.
+        def member_query(spec)
+            mbrs = []
+            mbr_sel = try{ @cube.open_member_selection("MemberQuery") }
+            begin
+                mbr_sel.execute_query(<<-EOQ.strip, spec)
+                    <OutputType Binary
+                    <SelectMbrInfo(MemberName, ParentMemberName, DimensionName)
+                EOQ
+                mbr_sel.get_members && mbr_sel.get_members.get_all.each do |ess_mbr|
+                    dim = self[ess_mbr.getDimensionName()]
+                    mbr = MemberLite.new(dim, ess_mbr)
+                    mbrs << mbr
+                end
+            ensure
+                mbr_sel.close
+            end
+            mbrs
         end
 
 
