@@ -43,6 +43,13 @@ class Essbase
             1241024, 1241045, 1241028, 1243002, 1243003
         ]
 
+        # Most INFO level messages will be logged at FINE level, but the following
+        # message numbers will be logged at INFO level. These represent key messages
+        # relating to user actions, key steps in a calc script etc.
+        INFO_MSGS = [
+            1012668, 1012670
+        ]
+
 
         # Logger used to log Essbase server messages
         attr_reader :log
@@ -70,7 +77,7 @@ class Essbase
         #   numbers identifying messages that should be suppressed (i.e. not logged)
         def initialize(log, options = {})
             @log = log
-            @include_message_num = options[:include_message_num]
+            @include_message_num = options.fetch(:include_message_num, true)
             @connection_id = options[:connection_id]
             @suppress_message_nums = options.fetch(:suppress_message_nums, DEFAULT_SUPPRESS_MSGS.clone)
         end
@@ -92,7 +99,7 @@ class Essbase
                     when MSG_LVL_DEBUG
                         log.finest(msg)
                     when MSG_LVL_INFO
-                        log.fine(msg)
+                        INFO_MSGS.include?(msg_num) ? log.info(msg) : log.fine(msg)
                     when MSG_LVL_WARN
                         log.warning(msg)
                     when MSG_LVL_ERROR
