@@ -47,15 +47,16 @@ class Essbase
             stmt = stmt.sub(/;\s*$/, '').gsub(/\n/, ' ').gsub(/\s{2,}/, ' ').strip
             log.finer "Executing MAXL statement: #{orig_stmt}"
             begin
+                ret = nil
                 instrument 'maxl', statement: stmt do
-                    try{ @maxl.execute(stmt) }
+                    ret = try{ @maxl.execute(stmt) }
                 end
+                ret = result_set if process_messages
+                ret
             rescue
                 log.severe "Error in Maxl statement: #{stmt}"
+                process_messages
                 raise
-            end
-            if @count = process_messages
-                result_set
             end
         end
 
@@ -74,6 +75,7 @@ class Essbase
         # on to the message handler.
         def process_messages
             count = nil
+            @server.message_handler.clear_last_msg!
             try{ @maxl.get_messages }.each do |msg|
                 msg =~ /(\w+) - (\d+) - (.+)/
                 level, msg_num, msg_text = $1, $2.to_i, $3

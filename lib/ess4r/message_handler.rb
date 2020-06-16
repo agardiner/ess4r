@@ -80,6 +80,12 @@ class Essbase
             @include_message_num = options.fetch(:include_message_num, true)
             @connection_id = options[:connection_id]
             @suppress_message_nums = options.fetch(:suppress_message_nums, DEFAULT_SUPPRESS_MSGS.clone)
+            @last_msg = nil
+        end
+
+
+        def clear_last_msg!
+            @last_msg = nil
         end
 
 

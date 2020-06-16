@@ -143,7 +143,7 @@ class Essbase
         # @param local_dir [String] The path to the local directory to which
         #   files should be downloaded.
         # @param file_spec [String] A file name pattern that identifies file(s)
-        #   to upload from +local_dir+.
+        #   to download to +local_dir+.
         # @return [Integer] A count of the number of files downloaded.
         def download_files(local_dir, file_spec)
             files = list_files(file_spec)
