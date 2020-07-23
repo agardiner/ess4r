@@ -15,6 +15,18 @@ class Essbase
             super(ess_exc.message)
         end
 
+
+        # Delegate to underlying EssException
+        def method_missing(mthd, *args)
+            @ess_exception.send(mthd, *args)
+        end
+
+
+        # For any unknown method, check if the underlying object responds to it.
+        def respond_to?(mthd_name)
+            @ess_exception.respond_to?(mthd_name)
+        end
+
     end
 
 
