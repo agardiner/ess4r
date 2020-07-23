@@ -182,6 +182,23 @@ class Essbase
             files.size
         end
 
+
+        # Deletes files from the Essbase server database directory.
+        #
+        # @param file_spec [String] A file name pattern that identifies file(s)
+        #   to delete.
+        # @return [Integer] A count of the number of files deleted.
+        def delete_files(file_spec)
+            files = list_files(file_spec)
+            instrument 'delete_files', files: files, source: self do
+                files.each do |item|
+                    self.delete_olap_file_object(item.type, item.name)
+                    log.finer "Deleted #{item.file_name}"
+                end
+            end
+            files.size
+        end
+
     end
 
 end
