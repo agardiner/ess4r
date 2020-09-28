@@ -37,8 +37,9 @@ class Essbase
 
     # Connect to an Essbase server using a user id and password.
     #
-    # @param user [String] A userid with login rights to Essbase
-    # @param password [String] The password for the user
+    # @param user [String] A userid with login rights to Essbase. Use a value of
+    #   +nil+ if authenticating via a CSS token.
+    # @param password [String] The password for +user+, or a CSS token.
     # @param server [String] The Essbase server to connect to. May include an
     #   optional port number for when the Essbase server is not listening on the
     #   default port; use the form <server>:<port>.

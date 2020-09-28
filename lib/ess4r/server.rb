@@ -19,8 +19,9 @@ class Essbase
         #
         # Create a connection to an Essbase server.
         #
-        # @param user [String] The user id to connect with.
-        # @param password [String] The user password.
+        # @param user [String] The user id to connect with. Use a value of
+        #   +nil+ if authenticating via CSS token.
+        # @param password [String] The user password or CSS token.
         # @param server [String] The server network name or IP address. If
         #   Essbase is not running on the default port, specify a port using
         #   the form <server>:<port>.
@@ -37,9 +38,10 @@ class Essbase
 
             super(logger, '@server')
 
-            log.fine "Connecting to Essbase server #{server} as #{user}"
+            is_token = user.nil? && password.length > 30
+            log.fine "Connecting to Essbase server #{server} #{is_token ? 'using CSS token' : "as #{user}"} (#{aps_url})"
             instrument "sign_on", :server => server, :user_id => user, :aps_url => aps_url do
-                @server = try{ Essbase.instance.sign_on(user, password, false, nil, aps_url, server) }
+                @server = try{ Essbase.instance.sign_on(user, password, is_token, nil, aps_url, server) }
                 @message_handler = MessageHandler.new(logger, options)
                 try{ @server.set_message_handler(@message_handler) }
             end
