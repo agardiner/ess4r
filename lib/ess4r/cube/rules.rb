@@ -38,7 +38,7 @@ class Essbase
             when :tab, '\t'
                 ff.setColumnDelimiter(EssRFFlatFile::TAB)
             when :comma, ','
-                ff.setColumnDelimiter(EssRFFlatFile::COMMA)
+                ff.setColumnDelimiter(EssRFFlatFile::COMMMA)
             when :space, :whitespace, ' '
                 ff.setColumnDelimiter(EssRFFlatFile::WHITESPACE)
             end
