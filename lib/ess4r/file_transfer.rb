@@ -173,12 +173,13 @@ class Essbase
             files = paths.map{ |p| File.basename(p) }
             instrument 'upload_files', local_dir: local_dir, files: files, target: self do
                 paths.each do |path|
+                    name = yield(name) if block_given?
                     ext = File.extname(path)
                     name = File.basename(path, ext)
                     obj_type = FileObject.file_type_for(ext)
                     self.delete_olap_file_object(obj_type, name) rescue nil
                     self.copy_olap_file_object_to_server(obj_type, name, path, true)
-                    log.finer "Uploaded #{name}.#{ext}"
+                    log.fine "Uploaded #{name}.#{ext}"
                 end
             end
             files.size
