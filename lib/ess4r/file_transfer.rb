@@ -126,7 +126,9 @@ class Essbase
         #   to upload from +local_dir+.
         # @return [Array<String>] A list of file names matching +file_spec+.
         def list_files(file_spec = '*')
-            filter = Regexp.new("^#{file_spec.gsub('.', '\.').gsub('?', '.').gsub('*', '.*')}$",
+            file_type = FileObject.file_type_for(file_spec)
+            filter = Regexp.new("^#{File.basename(file_spec, File.extname(file_spec)).
+                                gsub('.', '\.').gsub('?', '.').gsub('*', '.*')}$",
                                 Regexp::IGNORECASE)
             items = self.get_olap_file_objects(Essbase::IEssOlapFileObject.TYPE_ALL).sort_by(&:name)
             files = []
@@ -152,7 +154,7 @@ class Essbase
                     local_file = "#{local_dir}/#{item.file_name}"
                     self.copy_olap_file_object_from_server(item.type, item.name, local_file, false)
                     File.utime(File.atime(local_file), item.time_modified, local_file)
-                    log.finer "Downloaded #{item.file_name}"
+                    log.fine "Downloaded #{item.file_name}"
                 end
             end
             files.size
