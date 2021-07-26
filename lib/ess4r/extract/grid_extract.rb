@@ -24,14 +24,15 @@ class Essbase
         # @param output_file [String] A path to where the extract should be saved.
         # @param options [Hash] An options hash for controlling various facets of
         #   the extract process.
-        def extract_data(output_file, options = {})
+        def extract_data(output_file, options = {}, &blk)
             log.info "Extracting #{@cube} data via Grid API..."
             cv = @cube.open_cube_view
             begin
                 grid = try{ cv.getGridView() }
-                generate_grid(gird, options)
+                generate_grid(grid, options)
                 cv.retrieve(options)
-                save_output_to_file(grid, output_file, options)
+                save_output_to_file(grid, output_file, options) if output_file
+                blk.call(grid) if blk
             ensure
                 cv.close
             end
@@ -47,15 +48,17 @@ class Essbase
         def generate_grid(grid, options)
             pov_count = extract_spec[:pov] && extract_spec[:pov].size
             pov_offset = pov_count ? 1 : 0
-            row_dims = extract_spec[:grid].first.find_index{ |c| !c.nil? }
-            row_count = extract_spec[:grid].size
-            col_count = extract_spec[:grid].max_by(&:size).size
+            grid_spec = extract_spec[:grid].clone
+            grid_spec.map!{ |row| row.is_a?(Array) ? row : row.split('|') }
+            row_dims = grid_spec.first.find_index{ |c| !c.nil? }
+            row_count = grid_spec.size
+            col_count = grid_spec.max_by(&:size).size
             if pov_count
                 row_count += 1
                 pov_len = row_dims + pov_count
                 col_count = pov_len if pov_len > col_count
             end
-            extract_spec[:grid].each_with_index do |row, row_i|
+            grid_spec.each_with_index do |row, row_i|
                 row_i += pov_offset
                 row.each_with_index do |cell, col_i|
                     if cell
@@ -82,7 +85,6 @@ class Essbase
                 (0...rows).each do |row_i|
                     cells = []
                     (0...cols).each do |col_i|
-                        #cell = try{ grid.getCell(row_i, col_i) }
                         cells << try{ grid.getStringValue(row_i, col_i) }
                     end
                     cb.call(cells) if cb

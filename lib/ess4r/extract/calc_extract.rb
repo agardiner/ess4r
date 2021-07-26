@@ -76,6 +76,11 @@ class Essbase
             col_format = options.fetch(:column_format, true)
             level = options.fetch(:export_level, 'LEVEL0')
             decimals = options.fetch(:decimal_places, 2)
+            if options[:decimal_places]
+                decimals = "DataExportDecimal #{options[:decimal_places]};"
+            else
+                decimals = ''
+            end
             include_header = options.fetch(:include_header, false)
             field_sep = options.fetch(:field_sep, "\t")
             missing_val = options.fetch(:missing_val, "NULL")
@@ -111,7 +116,7 @@ class Essbase
                     DataExportColHeader "#{@col_dims.first}";
                     DataExportRelationalFile #{col_format ? 'ON' : 'OFF'};
                     DataExportOverwriteFile ON;
-                    DataExportDecimal #{decimals};
+                    #{decimals}
                 };
 
 

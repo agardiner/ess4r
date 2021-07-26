@@ -25,6 +25,12 @@ class Essbase
         alias_method :get_application, :application
 
 
+        # Returns the Server that this Cube is on
+        def server
+            @application.server
+        end
+
+
         # @!visibility private
         #
         # Creates a new Cube object to wrap the supplied +cube+ JAPI object.
