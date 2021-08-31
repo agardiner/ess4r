@@ -62,7 +62,7 @@ class Essbase
             col_info = column_info(cols)
             rows = []
             while try { @result_set.next } do
-                row = []
+                row = {}
                 col_info.each do |col, info|
                     obj = try{ @result_set.object(info[:index]) }
                     case info[:type]
