@@ -120,6 +120,35 @@ class Essbase
             end
         end
 
+
+        # Copy a local file to any accessible location on the Essbase server.
+        #
+        # @param local_path [String] Path to the local file that is to be copied
+        #   to the Essbase server
+        # @param remote_path [String] Full path to the location on the Essbase
+        #   server where the file is to be copied. Note that relative paths are
+        #   not reliable, because the working directory of the Essbase agent can
+        #   be anywhere (e.g. in a crash dump folder).
+        def copy_file_to_server(local_path, remote_path)
+            log.fine "Copying local file #{local_path} to Essbase server at #{remote_path}"
+            try{ @server.copyOlapFileToServer(local_path, remote_path) }
+        end
+
+
+        # Copy a remote file on the Essbase server to a local path.
+        #
+        # @param remote_path [String] Full path to the location on the Essbase
+        #   server where the file is to be copied. Note that relative paths are
+        #   not reliable, because the working directory of the Essbase agent can
+        #   be anywhere (e.g. in a crash dump folder).
+        # @param local_path [String] Path to the local file where the remote file
+        #   should be copied. Note that the folder must already exist, but any
+        #   existing file will be overwritten.
+        def copy_file_from_server(remote_path, local_path)
+            log.fine "Copying remote file #{remote_path} from Essbase server to #{local_path}"
+            try{ @server.copyOlapFileToServer(remote_path, local_path) }
+        end
+
     end
 
 end
